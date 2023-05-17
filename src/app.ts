@@ -1,6 +1,7 @@
 import express, { Express, Request, Response } from "express";
 
 import httpLogger from "./utils/http-logger";
+import userRouter from "./routes/user";
 
 const app: Express = express();
 
@@ -17,8 +18,12 @@ const app: Express = express();
 
 app.use(httpLogger);
 
-app.use("/api/v1/docs", (req: Request, res: Response): void => {
-  res.send("Hello world!");
+app.use(express.json({ limit: "10kb" })); // Parse request body
+
+app.use("/api/v1/users", userRouter);
+
+app.get("/", (req: Request, res: Response): void => {
+  res.send(`Hello from backend! Use /api/v1/docs 🔚 or /api/v1/users 🔚`);
 });
 
 app.all("*", (req: Request, res: Response): void => {

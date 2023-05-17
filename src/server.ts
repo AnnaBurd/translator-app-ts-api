@@ -4,6 +4,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { connect as databaseConnect } from "mongoose";
+
 import app from "./app";
 import logger from "./utils/logger";
 
