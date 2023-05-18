@@ -25,6 +25,7 @@ const schema = new Schema<IUser, UserModel, IUserMethods>({
   email: {
     type: String,
     required: [true, "Please provide email"],
+    match: /.+\@.+\..+/,
     unique: true,
   },
   password: { type: String, required: true },

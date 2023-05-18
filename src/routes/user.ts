@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { Role } from "../models/user";
+import { Role } from "../models/User";
 
 import {
   signup,
@@ -13,7 +13,7 @@ const router = Router();
 router.post("/login", login);
 router.post("/signup", signup);
 
-// Require users to log in to get access to routes below
+// Require users to log in to get access to routes below:
 router.use(protectRoute);
 
 router.get("/test", (req, res) => {

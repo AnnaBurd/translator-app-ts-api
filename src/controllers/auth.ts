@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 
-import User, { IUser, IUserMethods, Role as Role } from "../models/user";
+import User, { IUser, Role as Role } from "../models/User";
 import { attachJWTCookie, getJWTValue } from "../utils/jwt-handler";
 import logger from "../utils/logger";
-import { error } from "console";
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -124,3 +123,5 @@ export const restrictRouteTo = (...roles: [Role]) => {
     next();
   };
 };
+
+// TODO: change password / forgot password / confirm email

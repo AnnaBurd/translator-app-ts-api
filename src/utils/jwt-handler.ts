@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 
-import User, { IUser, IUserMethods } from "../models/user";
+import User, { IUser, IUserMethods } from "../models/User";
 
 import jwt, { JwtPayload } from "jsonwebtoken";
 
