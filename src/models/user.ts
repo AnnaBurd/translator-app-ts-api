@@ -1,4 +1,6 @@
-import { Schema, model } from "mongoose";
+import { Model, Schema, model } from "mongoose";
+import bcrypt from "bcrypt";
+import logger from "../utils/logger";
 
 export interface IUser {
   name: string;
@@ -6,7 +8,13 @@ export interface IUser {
   password: string;
 }
 
-const userSchema = new Schema<IUser>({
+export interface IUserMethods {
+  hashPassword(): void;
+  isCorrectPassword(inputPass: string): boolean;
+}
+
+type UserModel = Model<IUser, {}, IUserMethods>;
+const schema = new Schema<IUser, UserModel, IUserMethods>({
   name: { type: String },
   email: {
     type: String,
@@ -16,23 +24,36 @@ const userSchema = new Schema<IUser>({
   password: { type: String, required: true },
 });
 
-userSchema.index({ email: 1 });
+schema.index({ email: 1 });
+
+schema.method("hashPassword", async function hashPassword() {
+  this.password = await bcrypt.hash(this.password, 12);
+});
+
+schema.method("isCorrectPassword", async function isCorrectPassword(inputPass) {
+  return await bcrypt.compare(inputPass, this.password);
+});
+
+/* Hash new passwords before saving into db */
+schema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  logger.verbose(
+    `Pre-save user middleware - hash pass: ${this.email} - ${this.password}`
+  );
+  await this.hashPassword();
+  next();
+});
 
 /* Provide custom error message for duplicate emails */
-userSchema.post(
-  "save",
-  { errorHandler: true },
-  function (error: any, doc, next) {
-    if (error.code === 11000) {
-      error.code = "Email already registered. Forgot the password?";
-      next(error);
-      //   next(new Error("Email already registered. Forgot the password?"));
-    } else {
-      next(error);
-    }
+schema.post("save", { errorHandler: true }, function (error: any, doc, next) {
+  if (error.code === 11000) {
+    error.code = "Email already registered. Forgot the password?";
+    next(error);
+    //   next(new Error("Email already registered. Forgot the password?"));
+  } else {
+    next(error);
   }
-);
+});
 
-const User = model<IUser>("User", userSchema);
-
+const User = model<IUser, UserModel>("User", schema);
 export default User;

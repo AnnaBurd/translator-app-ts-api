@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
 
-import User, { IUser } from "../models/user";
+import User, { IUser, IUserMethods } from "../models/user";
 import logger from "../utils/logger";
 
 const attachJWTCookie = (user: IUser, res: Response): void => {
@@ -33,7 +32,6 @@ export const signup = async (
 
     // Save user to db
     // (and replace passwords with hashes for security)
-    newUser.password = await bcrypt.hash(newUser.password, 12);
     await newUser.save({ validateBeforeSave: false });
 
     // User account was created -> now generate unique token and send it to user
@@ -41,6 +39,46 @@ export const signup = async (
     res.status(201).json({ status: "success", data: { id: newUser._id } });
   } catch (error) {
     logger.error(`🔥 Could not sign up user (${(error as Error).message}`);
+    res.status(400).json({ status: "failure", error });
+  }
+};
+
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  logger.verbose(`Log in user: ${req.body.email} (${req.body.password})`);
+
+  try {
+    // Check if both email and password are provided
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      logger.error(`🔥 No email/password, need both to login`);
+      res.status(400).json({
+        status: "failure",
+        error: "No email or password, need both to login",
+      });
+    }
+
+    // Check if user with such email exists and password is correct
+    const user = await User.findOne({ email });
+
+    if (!user || !(await user.isCorrectPassword(password))) {
+      logger.error(`🔥 Email or password is incorrect`);
+      return res.status(400).json({
+        status: "failure",
+        error: "Email or password is incorrect",
+      });
+    }
+
+    // User exists and password is correct -> now generate unique token and send it to user
+    attachJWTCookie(user, res);
+    logger.verbose(`Log in user: ${req.body.email} successful - sending token`);
+    res.status(201).json({ status: "success", data: { id: user._id } });
+  } catch (error) {
+    logger.error(`🔥 Could not log in user (${(error as Error).message}`);
     res.status(400).json({ status: "failure", error });
   }
 };
