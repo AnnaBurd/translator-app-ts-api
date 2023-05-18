@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 
-import User, { IUser, IUserMethods } from "../models/user";
+import User, { IUser, IUserMethods, Role as Role } from "../models/user";
 import { attachJWTCookie, getJWTValue } from "../utils/jwt-handler";
 import logger from "../utils/logger";
 import { error } from "console";
@@ -108,4 +108,19 @@ export const protectRoute = async (
     logger.error(`🔥 Invalid token (${(error as Error).message}`);
     res.status(401).json({ status: "failure", error });
   }
+};
+
+export const restrictRouteTo = (...roles: [Role]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const currentUserRole = req.currentUser?.role as Role;
+
+    // TODO: centralized error handling to remove repetitive code
+    if (!roles.includes(currentUserRole)) {
+      return res.status(401).json({
+        status: "failure",
+        error: "You are not autorized",
+      });
+    }
+    next();
+  };
 };

@@ -6,11 +6,17 @@ export interface IUser {
   name: string;
   email: string;
   password: string;
+  role: Role;
 }
 
 export interface IUserMethods {
   hashPassword(): void;
   isCorrectPassword(inputPass: string): boolean;
+}
+
+export enum Role {
+  User = "USER",
+  Admin = "ADMIN",
 }
 
 type UserModel = Model<IUser, {}, IUserMethods>;
@@ -22,6 +28,7 @@ const schema = new Schema<IUser, UserModel, IUserMethods>({
     unique: true,
   },
   password: { type: String, required: true },
+  role: { type: String, default: Role.User },
 });
 
 schema.index({ email: 1 });
