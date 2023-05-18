@@ -1,22 +1,15 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
 
 import User, { IUser, IUserMethods } from "../models/user";
+import { attachJWTCookie, getJWTValue } from "../utils/jwt-handler";
 import logger from "../utils/logger";
+import { error } from "console";
 
-const attachJWTCookie = (user: IUser, res: Response): void => {
-  const token = jwt.sign(
-    { data: user.email },
-    process.env.TOKEN_SUPER_SECRET as string,
-    { expiresIn: "1d" }
-  );
-
-  res.cookie("translator-app-token", token, {
-    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    secure: process.env.NODE_ENV !== "development", // only send with encrypted connection (https)
-    httpOnly: true,
-  });
-};
+declare module "express-serve-static-core" {
+  interface Request {
+    currentUser?: IUser;
+  }
+}
 
 export const signup = async (
   req: Request,
@@ -80,5 +73,39 @@ export const login = async (
   } catch (error) {
     logger.error(`🔥 Could not log in user (${(error as Error).message}`);
     res.status(400).json({ status: "failure", error });
+  }
+};
+
+export const protectRoute = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  logger.verbose(`Protecting route from not logged in users: ${req.url}`);
+
+  // Verify client's token
+  // TODO: client can store token as cookie and resend on each request, or I can manually handle it on client side
+  // e.g. I can send token with special authorization http headers (headers.authorization Bearer ... token)
+
+  try {
+    const clientTokenData = await getJWTValue(req);
+
+    // Check if user, for whom token was issued, still exists
+    const currentUser = await User.findOne({ email: clientTokenData.email });
+    if (!currentUser)
+      return res.status(401).json({
+        status: "failure",
+        error: "User was deleted",
+      });
+
+    // TODO: Check if user did not change password since token was issued
+
+    // Proceed to next (after protected) route middleware
+    // And pass the logged in user info inside request data
+    req.currentUser = currentUser;
+    next();
+  } catch (error) {
+    logger.error(`🔥 Invalid token (${(error as Error).message}`);
+    res.status(401).json({ status: "failure", error });
   }
 };

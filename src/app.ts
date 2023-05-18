@@ -3,6 +3,8 @@ import express, { Express, Request, Response } from "express";
 import httpLogger from "./utils/http-logger";
 import userRouter from "./routes/user";
 
+import cookieParser from "cookie-parser";
+
 const app: Express = express();
 
 // Follow recommended network security practices
@@ -19,6 +21,7 @@ const app: Express = express();
 app.use(httpLogger);
 
 app.use(express.json({ limit: "10kb" })); // Parse request body
+app.use(cookieParser());
 
 app.use("/api/v1/users", userRouter);
 
