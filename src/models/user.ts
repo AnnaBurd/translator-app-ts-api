@@ -1,12 +1,14 @@
-import { Model, Schema, model } from "mongoose";
+import { Model, Schema, Document, Types, model } from "mongoose";
 import bcrypt from "bcrypt";
 import logger from "../utils/logger";
+import { IDoc } from "./Doc";
 
-export interface IUser {
+export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
   role: Role;
+  docs: [IDoc["_id"]];
 }
 
 export interface IUserMethods {
@@ -30,6 +32,7 @@ const schema = new Schema<IUser, UserModel, IUserMethods>({
   },
   password: { type: String, required: true },
   role: { type: String, default: Role.User },
+  docs: [{ type: Schema.Types.ObjectId, ref: "Doc" }],
 });
 
 schema.index({ email: 1 });

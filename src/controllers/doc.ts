@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 
 import logger from "../utils/logger";
-import Doc, { Language } from "../models/Doc";
+import Doc from "../models/Doc";
+import { IUser } from "../models/User";
 
 export const getUserDocuments = async (
   req: Request,
@@ -10,10 +11,17 @@ export const getUserDocuments = async (
 ) => {
   logger.verbose(`Getting documents for user: ${req.currentUser?.email}`);
 
-  // const docs = TODO:
-
   try {
-    res.status(201).json({ status: "success", data: "ok in development" });
+    const currentUser = req.currentUser as IUser;
+    await currentUser.populate({
+      path: "docs",
+    });
+
+    res.status(201).json({
+      status: "success",
+      results: currentUser.docs.length,
+      data: currentUser.docs,
+    });
   } catch (error) {
     logger.error(
       `🔥 Could not get user's documents. (${(error as Error).message}`
@@ -34,7 +42,11 @@ export const createNewDoc = async (
   try {
     const title = req.body.title;
     const lang = req.body.lang;
-    const newDoc = await Doc.create({ title, lang });
+    const currentUser = req.currentUser as IUser;
+
+    const newDoc = await Doc.create({ title, lang, owner: currentUser._id });
+    currentUser.docs.push(newDoc);
+    await currentUser.save({ validateBeforeSave: false }); // Update list of user's documents
 
     res.status(201).json({ status: "success", data: newDoc });
   } catch (error) {

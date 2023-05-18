@@ -1,8 +1,9 @@
-import { Model, Schema, model } from "mongoose";
+import { Model, Schema, Document, model } from "mongoose";
 
 import logger from "../utils/logger";
+import User, { IUser } from "./User";
 
-export interface IDoc {
+export interface IDoc extends Document {
   title: string;
   lang: string;
   content: [];
@@ -10,6 +11,7 @@ export interface IDoc {
   messagesHistory: [];
   createdAt: Date;
   changedAt: Date;
+  owner: IUser["_id"];
 }
 
 export interface IDocMethods {
@@ -65,6 +67,7 @@ const schema = new Schema<IDoc, DocModel, IDocMethods>({
   changedAt: {
     type: Date,
   },
+  owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
 });
 
 const Doc = model<IDoc, DocModel>("Doc", schema);

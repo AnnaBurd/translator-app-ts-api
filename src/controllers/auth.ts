@@ -125,3 +125,4 @@ export const restrictRouteTo = (...roles: [Role]) => {
 };
 
 // TODO: change password / forgot password / confirm email
+// TODO: refresh token every x minutes for security?
