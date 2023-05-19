@@ -1,3 +1,12 @@
+/* Usage: Log levels from least (6-Silly) to most (0-Error) important:
+  logger.silly("Silly");
+  logger.debug("Debug");
+  logger.verbose("Verbose");
+  logger.http("Http");
+  logger.info("Info");
+  logger.warn("Warn");
+  logger.error("Error"); */
+
 import * as winston from "winston";
 
 const fileLogFormat = winston.format.combine(
@@ -48,14 +57,5 @@ const logger = winston.createLogger({
     }),
   ],
 });
-
-// Log levels from least (6-Silly) to most (0-Error) important:
-// logger.silly("Silly");
-// logger.debug("Debug");
-// logger.verbose("Verbose");
-// logger.http("Http");
-// logger.info("Info");
-// logger.warn("Warn");
-// logger.error("Error");
 
 export default logger;

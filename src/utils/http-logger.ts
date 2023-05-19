@@ -1,5 +1,4 @@
 import morgan from "morgan";
-
 import logger from "./logger";
 
 export default morgan(

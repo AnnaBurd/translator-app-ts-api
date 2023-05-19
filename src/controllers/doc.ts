@@ -1,32 +1,39 @@
 import { Request, Response, NextFunction } from "express";
+import { StatusCodes } from "http-status-codes";
 
-import logger from "../utils/logger";
 import Doc, { IDoc } from "../models/Doc";
 import { IUser } from "../models/User";
+
+import { translateBlock } from "../utils/translator";
+import {
+  sendSuccessMessage,
+  sendErrorMessage,
+} from "../utils/response-handlers";
+import logger from "../utils/logger";
 
 export const getUserDocuments = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  logger.verbose(`Getting documents for user: ${req.currentUser?.email}`);
+  logger.verbose(
+    `Getting list of documents for user: ${req.currentUser?.email}`
+  );
 
   try {
     const currentUser = req.currentUser as IUser;
+
     await currentUser.populate({
       path: "docs",
+      select: "title lang createdAt changedAt",
     });
 
-    res.status(201).json({
-      status: "success",
-      results: currentUser.docs.length,
-      data: currentUser.docs,
-    });
+    sendSuccessMessage(res, StatusCodes.OK, currentUser.docs, true);
   } catch (error) {
     logger.error(
       `🔥 Could not get user's documents. (${(error as Error).message}`
     );
-    res.status(400).json({ status: "failure", error });
+    sendErrorMessage(res, StatusCodes.NOT_FOUND, error);
   }
 };
 
@@ -48,12 +55,12 @@ export const createNewDoc = async (
     currentUser.docs.push(newDoc);
     await currentUser.save({ validateBeforeSave: false }); // Update list of user's documents
 
-    res.status(201).json({ status: "success", data: newDoc });
+    sendSuccessMessage(res, StatusCodes.CREATED, newDoc);
   } catch (error) {
     logger.error(
       `🔥 Could not create new document. (${(error as Error).message}`
     );
-    res.status(400).json({ status: "failure", error });
+    sendErrorMessage(res, StatusCodes.BAD_REQUEST, error);
   }
 };
 
@@ -79,12 +86,18 @@ export const getDocument = async (
   try {
     const doc = await getUserDocument(req.currentUser as IUser, req.params.id);
 
-    res.status(200).json({ status: "success", data: doc });
+    sendSuccessMessage(res, StatusCodes.OK, doc);
   } catch (error) {
     logger.error(`🔥 Could not open document. (${(error as Error).message})`);
-    res.status(400).json({ status: "failure", error });
+    sendErrorMessage(res, StatusCodes.BAD_REQUEST, error);
   }
 };
+
+enum UpdateOption {
+  newBlock = "new-block",
+  updateBlock = "update-block",
+  updateTranslation = "update-translation",
+}
 
 export const updateDocument = async (
   req: Request,
@@ -98,14 +111,57 @@ export const updateDocument = async (
   try {
     const doc = await getUserDocument(req.currentUser as IUser, req.params.id);
 
-    // const updates = TODO:
+    // Parse data from client's request
+    const lang = req.body.translationLang as string;
+    const newTitle = req.body.title as string;
+    const updates = req.body.content;
+    const option = req.body.option as string;
 
-    res.status(501).json({ status: "success", data: "In development" });
+    // Update doc info
+    if (newTitle) {
+      doc.title = newTitle;
+    }
+    let translation = doc.translations.find((tr) => tr.lang === lang);
+
+    if (!translation) {
+      translation = { lang: lang, content: [] };
+      doc.translations.push(translation);
+      translation = doc.translations.find((tr) => tr.lang === lang); // Get link to the translation object in mongoose doc
+    }
+
+    // Apply updates
+    switch (option) {
+      case UpdateOption.newBlock:
+        for (const block of updates) {
+          const [translatedBlock, newMessages] = await translateBlock(
+            block,
+            doc.messagesHistory
+          );
+
+          // Immediately send response to client // TODO: - refactor, here different actions in one place are not clear
+          res.write(JSON.stringify(translatedBlock));
+
+          doc.content.push(block);
+          translation?.content.push(translatedBlock);
+          doc.messagesHistory.push(...newMessages);
+
+          // Wait to stay within Open AI API rate limits
+          await new Promise((res) => {
+            setTimeout(res, Math.random() * 100);
+          });
+
+          await doc.save();
+        }
+        res.end("success");
+        break;
+      default:
+        sendErrorMessage(res, StatusCodes.NOT_IMPLEMENTED, "In development");
+    }
   } catch (error) {
     logger.error(
       `🔥 Could not update user's document. (${(error as Error).message}`
     );
-    res.status(400).json({ status: "failure", error });
+    sendErrorMessage(res, StatusCodes.BAD_REQUEST, error);
   }
 };
 
@@ -127,11 +183,11 @@ export const deleteDocument = async (
     const deleted = await doc.deleteOne();
     await currentUser.updateOne({ $pull: { docs: deleted._id } });
 
-    res.status(204).json({ status: "success", data: null });
+    sendSuccessMessage(res, StatusCodes.NO_CONTENT, null);
   } catch (error) {
     logger.error(
       `🔥 Could not delete users's document. (${(error as Error).message}`
     );
-    res.status(400).json({ status: "failure", error });
+    sendErrorMessage(res, StatusCodes.BAD_REQUEST, error);
   }
 };

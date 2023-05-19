@@ -19,18 +19,24 @@ const app: Express = express();
 // app.use(mongoSanitize());
 // app.use(xss());
 
+// Log incoming http requests
 app.use(httpLogger);
 
-app.use(express.json({ limit: "10kb" })); // Parse request body
+// Parse and save request body into req.body
+app.use(express.json({ limit: "10kb" }));
+// Parse and save request cookies into req.cookies
 app.use(cookieParser());
 
+// Routes
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/docs", docRouter);
 
+// TODO: api usage
 app.get("/", (req: Request, res: Response): void => {
   res.send(`Hello from backend! Use /api/v1/docs 🔚 or /api/v1/users 🔚`);
 });
 
+// Default route
 app.all("*", (req: Request, res: Response): void => {
   res.status(404).json({
     status: "fail",

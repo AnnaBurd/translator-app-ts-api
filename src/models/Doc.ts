@@ -3,12 +3,28 @@ import { Model, Schema, Document, model } from "mongoose";
 import logger from "../utils/logger";
 import User, { IUser } from "./User";
 
+export interface Block {
+  blockId: string;
+  index: number;
+  text: string;
+}
+
+export interface TranslationBlock extends Block {
+  edited?: boolean;
+}
+
+export interface Message {
+  role: string;
+  content: string;
+  attachToPrompt?: boolean;
+}
+
 export interface IDoc extends Document {
   title: string;
   lang: string;
-  content: [];
-  translations: [];
-  messagesHistory: [];
+  content: Array<Block>;
+  translations: Array<{ lang: string; content: Array<TranslationBlock> }>;
+  messagesHistory: Array<Message>;
   createdAt: Date;
   changedAt: Date;
   owner: IUser["_id"];
@@ -39,7 +55,7 @@ const schema = new Schema<IDoc, DocModel, IDocMethods>({
     default: Language.Ru,
     enum: { values: Object.values(Language) },
   },
-  content: [{ editorId: String, index: Number, text: String }],
+  content: [{ blockId: String, index: Number, text: String }],
   translations: [
     {
       lang: {
@@ -49,10 +65,10 @@ const schema = new Schema<IDoc, DocModel, IDocMethods>({
       },
       content: [
         {
-          editorId: String,
+          blockId: String,
           index: Number,
           text: String,
-          editedByHand: Boolean,
+          edited: Boolean,
         },
       ],
     },
@@ -71,4 +87,5 @@ const schema = new Schema<IDoc, DocModel, IDocMethods>({
 });
 
 const Doc = model<IDoc, DocModel>("Doc", schema);
+
 export default Doc;

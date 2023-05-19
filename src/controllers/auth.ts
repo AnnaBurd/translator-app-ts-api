@@ -94,7 +94,7 @@ export const protectRoute = async (
     if (!currentUser)
       return res.status(401).json({
         status: "failure",
-        error: "User was deleted",
+        error: "User was deleted, sign up again?",
       });
 
     // TODO: Check if user did not change password since token was issued
