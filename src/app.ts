@@ -1,25 +1,19 @@
-import express, { Express, Request, Response } from "express";
+import express, { Request, Response, json } from "express";
 
 import httpLogger from "./utils/http-logger";
 
-const app: Express = express();
+import userRoutes from "./routes/users";
+import { errorHandler } from "./middlewares/errorHandler";
 
-// Follow recommended network security practices
-// if (process.env.NODE_ENV === "production") {
-// app.use(cors());
-// app.use(helmet());
-// app.use(rateLimit({ max: 100, windowMs: 30 * 60 * 1000 }));
-// }
+const app = express();
 
-// TODO: check if really needed (after frontend is handled)
-// app.use(mongoSanitize());
-// app.use(xss());
-
+// Log incoming http requests
 app.use(httpLogger);
 
-app.use("/api/v1/docs", (req: Request, res: Response): void => {
-  res.send("Hello world!");
-});
+// Parse and save request body into req.body
+app.use(json({ limit: "10kb" }));
+
+app.use("/api/users", userRoutes);
 
 app.all("*", (req: Request, res: Response): void => {
   res.status(404).json({
@@ -27,5 +21,7 @@ app.all("*", (req: Request, res: Response): void => {
     message: `Can't find resource at: ${req.url}`,
   });
 });
+
+app.use(errorHandler);
 
 export default app;

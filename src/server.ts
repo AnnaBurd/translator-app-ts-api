@@ -1,49 +1,35 @@
 import * as dotenv from "dotenv";
-// Load environment variables and secrets
-// (by default reads constants from .env file and saves them as node js environment variables)
-dotenv.config();
+dotenv.config(); // Load variables from .env file to the node environment
 
-import { connect as databaseConnect } from "mongoose";
+import { connect } from "mongoose";
+
 import app from "./app";
 import logger from "./utils/logger";
 
-// Connect to database
-const DATABASE_URL =
-  process.env.NODE_ENV === "development"
-    ? (process.env.DATABASE_URL as string)
-    : "TODO: prod url";
+try {
+  // Establish database connection
+  const db = process.env.DATABASE_URL;
+  if (!db) {
+    throw new Error(`🫣  Need to specify database url in the .env file`);
+  }
 
-databaseConnect(DATABASE_URL)
-  .then((con) => {
-    logger.info("🚀 Connected to database");
-  })
-  .catch((err) => {
-    console.error("🔥 Could not connect to the database, exiting app ", err);
-    process.exit(1);
+  connect(db)
+    .then((con) => {
+      logger.info("🚀 Connected to database");
+    })
+    .catch((err) => {
+      throw new Error(
+        `🔥 Could not connect to the database (${(err as Error).message})`
+      );
+    });
+
+  // Launch Express server
+  const PORT = (process.env.PORT || 8000) as number;
+
+  app.listen(PORT, (): void => {
+    logger.info(`🚀 Listening to requests on port ${PORT}`);
   });
-
-// Launch express app
-const PORT: number = (
-  process.env.NODE_ENV === "development"
-    ? process.env.PORT || 8765
-    : process.env.PROD_PORT
-) as number;
-
-app.listen(PORT, (): void => {
-  logger.info(`🚀 Launched Express App, port ${PORT}`);
-});
-
-// TODO: Remove later
-// // Gracefully shut down the server in case something goes wrong
-// process.on("uncaughtException", (err) => {
-//   console.error("🔥 UncaughtException, exiting app ", err);
-//   process.exit(1);
-// });
-
-// // Gracefully shut down the server in case something goes wrong with async code
-// process.on("unhandledRejection", (err) => {
-//   console.error("🔥 UnhandledRejection, exiting app ", err);
-//   server.close(() => {
-//     process.exit(1);
-//   });
-// });
+} catch (err) {
+  logger.error(`Could not launch application: ${(err as Error).message}`);
+  process.exit(1);
+}
