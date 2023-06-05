@@ -1,4 +1,5 @@
-import { Schema, model } from "mongoose";
+import { Model, Schema, model } from "mongoose";
+import bcrypt from "bcrypt";
 
 export enum Role {
   User = "User",
@@ -13,7 +14,14 @@ export interface IUser {
   docs: any[]; // *TODO:
 }
 
-const schema = new Schema<IUser>({
+export interface IUserMethods {
+  hashPassword(): void;
+  isCorrectPassword(inputPassword: string): boolean;
+}
+
+type UserModel = Model<IUser, {}, IUserMethods>;
+
+const schema = new Schema<IUser, UserModel, IUserMethods>({
   name: String,
   email: {
     type: String,
@@ -30,9 +38,31 @@ schema.index({ email: 1 });
 
 // Issue names to anonymous users
 schema.pre("save", async function (next) {
-  console.log(this);
+  if (!this.name) {
+    this.name = this.email.split("@")[0];
+  }
+  next();
 });
 
-const User = model<IUser>("User", schema);
+// Hash user passwords to store in the database
+schema.method("hashPassword", async function hashPassword() {
+  this.password = await bcrypt.hash(this.password, 12);
+});
+
+schema.method(
+  "isCorrectPassword",
+  async function isCorrectPassword(inputPassword: string) {
+    return await bcrypt.compare(inputPassword, this.password);
+  }
+);
+
+schema.pre("save", async function (next) {
+  console.log("PRE_HASH_SAVE", this);
+
+  await this.hashPassword();
+  next();
+});
+
+const User = model<IUser, UserModel>("User", schema);
 
 export default User;
