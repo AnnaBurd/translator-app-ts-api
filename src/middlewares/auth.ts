@@ -1,7 +1,8 @@
 import { RequestHandler } from "express";
+import { HydratedDocument } from "mongoose";
 import User, { IUser, Role } from "../models/User";
-import logger from "../utils/logger";
 import { readJWTTokenValue } from "./tokenHandler";
+import logger from "../utils/logger";
 
 // TODO: change password / forgot password / confirm email
 // TODO: refresh token every x minutes for security?
@@ -9,7 +10,7 @@ import { readJWTTokenValue } from "./tokenHandler";
 // Globally extend Express TS Request interface with "currentUser" property
 declare module "express-serve-static-core" {
   interface Request {
-    currentUser?: IUser;
+    currentUser?: HydratedDocument<IUser>;
   }
 }
 

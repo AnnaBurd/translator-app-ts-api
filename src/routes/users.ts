@@ -13,11 +13,12 @@ const router = Router();
 router.post("/signup", signup);
 router.post("/signin", signin);
 
-// For registered users:
+// For signed in users:
 router.use(protectRoute);
-router.get("/profile", getUserProfile);
-router.patch("/profile"); // TODO:
-router.delete("/profile"); // TODO:
+router.route("/profile").get(getUserProfile).patch().delete();
+
+// router.patch("/profile"); // TODO:
+// router.delete("/profile"); // TODO:
 
 // For admins:
 router.use(restrictRouteTo(Role.Admin));

@@ -1,4 +1,5 @@
 import { Model, Schema, model } from "mongoose";
+import { IDoc } from "./Doc";
 import bcrypt from "bcrypt";
 
 export enum Role {
@@ -11,7 +12,7 @@ export interface IUser {
   email: string;
   password?: string;
   role: Role;
-  docs: any[]; // *TODO:
+  docs: IDoc[];
 }
 
 export interface IUserMethods {
@@ -19,7 +20,7 @@ export interface IUserMethods {
   isCorrectPassword(inputPassword: string): boolean;
 }
 
-type UserModel = Model<IUser, {}, IUserMethods>;
+export type UserModel = Model<IUser, {}, IUserMethods>;
 
 const schema = new Schema<IUser, UserModel, IUserMethods>({
   name: String,
@@ -31,7 +32,7 @@ const schema = new Schema<IUser, UserModel, IUserMethods>({
   },
   password: { type: String, required: true },
   role: { type: String, default: Role.User },
-  docs: [String],
+  docs: [{ type: Schema.Types.ObjectId, ref: "Doc" }],
 });
 
 schema.index({ email: 1 });

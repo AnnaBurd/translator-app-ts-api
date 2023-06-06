@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import httpLogger from "./utils/http-logger";
 
 import userRoutes from "./routes/users";
+import docRoutes from "./routes/docs";
 import { AppError, errorHandler } from "./middlewares/errorHandler";
 
 const app = express();
@@ -19,6 +20,7 @@ app.use(json({ limit: "10kb" }));
 app.use(cookieParser());
 
 app.use("/api/users", userRoutes);
+app.use("/api/docs", docRoutes);
 
 app.all("*", (req: Request, _: Response, next) => {
   next(new AppError(`Can't find resource at: ${req.url}`, 404));
