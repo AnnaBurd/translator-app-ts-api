@@ -1,7 +1,12 @@
 import { Router } from "express";
-import { signin, signup } from "../controllers/user";
 import { protectRoute, restrictRouteTo } from "../middlewares/auth";
 import { Role } from "../models/User";
+import {
+  getAllUsersStats,
+  getUserProfile,
+  signin,
+  signup,
+} from "../controllers/user";
 
 const router = Router();
 
@@ -10,16 +15,14 @@ router.post("/signin", signin);
 
 // For registered users:
 router.use(protectRoute);
-router.get("/profile");
-router.patch("profile");
-router.delete("profile");
+router.get("/profile", getUserProfile);
+router.patch("/profile"); // TODO:
+router.delete("/profile"); // TODO:
 
 // For admins:
 router.use(restrictRouteTo(Role.Admin));
-router.get("/", (req, res, next) => {
-  res.json({ message: "Here you fo" });
-});
-router.patch("/:userid");
-router.delete("/:userid");
+router.get("/", getAllUsersStats);
+router.patch("/:userid"); // TODO:
+router.delete("/:userid"); // TODO:
 
 export default router;

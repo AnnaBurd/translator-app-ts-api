@@ -1,5 +1,7 @@
 import express, { Request, Response, json } from "express";
 
+import cookieParser from "cookie-parser";
+
 import httpLogger from "./utils/http-logger";
 
 import userRoutes from "./routes/users";
@@ -12,6 +14,9 @@ app.use(httpLogger);
 
 // Parse and save request body into req.body
 app.use(json({ limit: "10kb" }));
+
+// Parse and save request cookies into req.cookies
+app.use(cookieParser());
 
 app.use("/api/users", userRoutes);
 

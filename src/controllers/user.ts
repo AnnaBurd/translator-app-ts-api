@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
+import { attachJWTToken } from "../middlewares/tokenHandler";
 import logger from "../utils/logger";
 import User from "../models/User";
-import { attachJWTToken } from "../middlewares/tokenHandler";
 
 export const signup: RequestHandler = async (req, res, next) => {
   try {
@@ -16,10 +16,10 @@ export const signup: RequestHandler = async (req, res, next) => {
     // Save new user into db
     await newUser.save({ validateBeforeSave: false });
 
-    // Generate signed in user token
+    // Generate token for signed in user
     attachJWTToken(newUser, res);
 
-    // Send response back to client
+    // Send response back to user
     res.status(201).json({
       status: "success",
       data: { name: newUser.name, email: newUser.email },
@@ -55,6 +55,35 @@ export const signin: RequestHandler = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(`🔥 Could not sign in user (${(error as Error).message})`);
+    next(error);
+  }
+};
+
+export const getUserProfile: RequestHandler = async (req, res, next) => {
+  logger.verbose(`Getting user info for user: ${req.currentUser?.email}`);
+
+  // TODO: filter user data to output only relevant fields
+
+  // Send response back to client
+  res.status(200).json({
+    status: "success",
+    data: { user: req.currentUser },
+  });
+};
+
+export const getAllUsersStats: RequestHandler = async (req, res, next) => {
+  logger.verbose(`Getting all users info for admin: ${req.currentUser?.email}`);
+
+  // TODO: filter user data to output only relevant fields
+
+  try {
+    const users = await User.find();
+
+    // TODO: paginate results
+
+    res.status(200).json({ status: "success", data: users });
+  } catch (error) {
+    logger.error(`🔥 Could not get users data (${(error as Error).message})`);
     next(error);
   }
 };
