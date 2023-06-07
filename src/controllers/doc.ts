@@ -1,7 +1,9 @@
 import { RequestHandler } from "express";
 import { HydratedDocument } from "mongoose";
 import logger from "../utils/logger";
-import Doc, { IDoc } from "../models/Doc";
+import Doc, { IDoc, Block } from "../models/Doc";
+import { IUser } from "../models/User";
+import { translateBlock } from "../services/translation";
 
 export const createNewDocument: RequestHandler = async (req, res, next) => {
   try {
@@ -44,28 +46,67 @@ export const getUserDocuments: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const getUserDocument: RequestHandler = async (req, res, next) => {
+const getUserDocument = async (user: IUser, docId: string) => {
+  // Make dure that requested document belongs to user
+  if (
+    !user.docs.some(
+      (doc) => (doc as HydratedDocument<IDoc>)._id.toString() === docId
+    )
+  )
+    throw new Error("You have no such document");
+
+  // Fetch document from database
+  const doc = await Doc.findById(docId);
+  if (!doc) throw new Error("Could not get a document, try again later");
+  return doc;
+};
+
+export const readUserDocument: RequestHandler = async (req, res, next) => {
   try {
-    const currentUser = req.currentUser!;
+    const doc = await getUserDocument(req.currentUser!, req.params.docId);
 
-    console.log(currentUser.docs, req.params.docId);
+    res.status(200).json({ status: "success", doc });
+  } catch (error) {
+    next(error);
+  }
+};
 
-    // TODO:
-    // Check if requested document belongs to user
-    // I can manually do it, but what if database has had changes since last time I requested user data?
+// export const editUserDocument: RequestHandler = async (req, res, next) => {
+//   try {
+//     const doc = await getUserDocument(req.currentUser!, req.params.docId);
 
-    // It is better to run db request to fetch document.
-    if (
-      currentUser?.docs.some((doc) => {
-        console.log("id=", (doc as HydratedDocument<IDoc>)._id.toString());
-        return (
-          (doc as HydratedDocument<IDoc>)._id.toString() === req.params.docId;
-      })
-    ) {
-      console.log("ok user has document with such id");
-    }
+//     res.status(200).json({ status: "success", doc });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
-    // const currentDoc = aw
+export const addNewBlockToTranslate: RequestHandler = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    // Get input data
+    const doc = await getUserDocument(req.currentUser!, req.params.docId);
+    const newBlock: Block = req.body.block;
+
+    // Call translation service
+    const [translatedNewBlock, apiMessages] = await translateBlock(
+      newBlock,
+      doc.messagesHistory
+    );
+
+    // console.log(newBlock, translatedNewBlock, apiMessages);
+
+    // Save results and history to the database
+    doc.content.push(newBlock);
+    doc.translationContent.push(translatedNewBlock);
+    doc.messagesHistory.push(...apiMessages);
+    await doc?.save();
+
+    // Send results back to user
+    res.status(200).json({ status: "success", data: translatedNewBlock });
   } catch (error) {
     next(error);
   }

@@ -2,8 +2,9 @@ import { Router } from "express";
 import { protectRoute } from "../middlewares/auth";
 import {
   createNewDocument,
-  getUserDocument,
+  readUserDocument,
   getUserDocuments,
+  addNewBlockToTranslate,
 } from "../controllers/doc";
 
 const router = Router();
@@ -12,6 +13,11 @@ const router = Router();
 router.use(protectRoute);
 
 router.route("/").get(getUserDocuments).post(createNewDocument);
-router.route("/:docId").get(getUserDocument).patch().delete();
+router
+  .route("/:docId")
+  .get(readUserDocument)
+  .post(addNewBlockToTranslate)
+  .patch()
+  .delete();
 
 export default router;
