@@ -20,7 +20,8 @@ export const attachJWTToken = (user: IUser, res: Response) => {
 
   res.cookie("translator-app", token, {
     expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
-    // secure: true, // TODO: set secure true and test in the production mode
+    sameSite: "none", // TODO: fix for prod
+    secure: true, // TODO: set secure true and test in the production mode
     httpOnly: true,
   });
 };

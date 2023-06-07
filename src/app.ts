@@ -16,7 +16,12 @@ app.use(httpLogger);
 
 // Apply cors policy
 // TODO: Configurations - Temporary confugured as CORS-enabled for all origins
-app.use(cors());
+app.use(
+  cors({
+    credentials: true,
+    origin: true,
+  })
+);
 
 // Parse and save request body into req.body
 app.use(json({ limit: "10kb" }));
