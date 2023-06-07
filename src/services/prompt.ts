@@ -1,5 +1,7 @@
 import { Block } from "../models/Doc";
-import { APIMessage } from "../models/Translation";
+
+import { ChatCompletionRequestMessageRoleEnum as APIRole } from "openai";
+import { APIMessage } from "./translation";
 
 const modelSystemRoles = {
   geologyExpert:
@@ -14,14 +16,47 @@ const modelPromptTemplates = {
 };
 
 export const generatePrompt = (block: Block, history?: Array<APIMessage>) => {
-  console.log("Generating Prompt for ", block, history);
+  const newMessages: Array<APIMessage> = [];
+  let prompt: Array<APIMessage>;
 
-  let previousAPIMessagesToAttach;
-  if (history) {
-    previousAPIMessagesToAttach = history;
+  if (!history || history?.length === 0) {
+    const firstSystemMessage = {
+      role: APIRole.System,
+      content: modelSystemRoles.geologyExpert,
+    };
+
+    prompt = [firstSystemMessage];
+
+    newMessages.push({
+      ...firstSystemMessage,
+      relevantBlockId: block.blockId,
+      attachToPrompt: true,
+    });
   } else {
-    previousAPIMessagesToAttach = [
-      { role: "system", content: modelSystemRoles.geologyExpert },
-    ];
+    prompt = history
+      .filter((msg) => msg.attachToPrompt)
+      .map((msg) => {
+        return { role: msg.role, content: msg.content };
+      });
   }
+
+  const newPromptMessage = {
+    role: APIRole.User,
+    content: `${modelPromptTemplates.geologyExpert.translate}
+  ${block.text}`,
+  };
+  prompt.push(newPromptMessage);
+  newMessages.push({
+    ...newPromptMessage,
+    relevantBlockId: block.blockId,
+    attachToPrompt: true,
+  });
+
+  // console.log("Generated prompt: ", prompt);
+  // console.log(
+  //   "And generated new outcoming messages for history: ",
+  //   newMessages
+  // );
+
+  return [prompt, newMessages];
 };

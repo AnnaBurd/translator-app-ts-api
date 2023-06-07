@@ -1,9 +1,11 @@
 import { RequestHandler } from "express";
 import { HydratedDocument } from "mongoose";
-import logger from "../utils/logger";
+
 import Doc, { IDoc, Block } from "../models/Doc";
-import { IUser } from "../models/User";
 import { translateBlock } from "../services/translation";
+import { IUser } from "../models/User";
+
+import logger from "../utils/logger";
 
 export const createNewDocument: RequestHandler = async (req, res, next) => {
   try {
@@ -71,16 +73,6 @@ export const readUserDocument: RequestHandler = async (req, res, next) => {
   }
 };
 
-// export const editUserDocument: RequestHandler = async (req, res, next) => {
-//   try {
-//     const doc = await getUserDocument(req.currentUser!, req.params.docId);
-
-//     res.status(200).json({ status: "success", doc });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-
 export const addNewBlockToTranslate: RequestHandler = async (
   req,
   res,
@@ -92,22 +84,35 @@ export const addNewBlockToTranslate: RequestHandler = async (
     const newBlock: Block = req.body.block;
 
     // Call translation service
-    const [translatedNewBlock, apiMessages] = await translateBlock(
+    const [translatedNewBlock, newMessages] = await translateBlock(
       newBlock,
       doc.messagesHistory
     );
 
-    // console.log(newBlock, translatedNewBlock, apiMessages);
-
     // Save results and history to the database
     doc.content.push(newBlock);
     doc.translationContent.push(translatedNewBlock);
-    doc.messagesHistory.push(...apiMessages);
+    doc.messagesHistory.push(...newMessages);
     await doc?.save();
 
     // Send results back to user
-    res.status(200).json({ status: "success", data: translatedNewBlock });
+    res
+      .status(200)
+      .json({
+        status: "success",
+        data: doc.translationContent[doc.translationContent.length - 1],
+      });
   } catch (error) {
     next(error);
   }
 };
+
+// export const editUserDocument: RequestHandler = async (req, res, next) => {
+//   try {
+//     const doc = await getUserDocument(req.currentUser!, req.params.docId);
+
+//     res.status(200).json({ status: "success", doc });
+//   } catch (error) {
+//     next(error);
+//   }
+// };

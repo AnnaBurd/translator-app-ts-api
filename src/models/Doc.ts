@@ -1,5 +1,6 @@
 import { Schema, model } from "mongoose";
-import { APIMessage, TranslationBlock } from "./Translation";
+import { TranslationBlock } from "./Translation";
+import { APIMessage } from "../services/translation";
 
 export enum Language {
   Ru = "ru",
