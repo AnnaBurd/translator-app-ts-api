@@ -49,6 +49,8 @@ export const getUserDocuments: RequestHandler = async (req, res, next) => {
 };
 
 const getUserDocument = async (user: IUser, docId: string) => {
+  console.log(user);
+
   // Make dure that requested document belongs to user
   if (
     !user.docs.some(
@@ -59,7 +61,10 @@ const getUserDocument = async (user: IUser, docId: string) => {
 
   // Fetch document from database
   const doc = await Doc.findById(docId);
-  if (!doc) throw new Error("Could not get a document, try again later");
+  if (!doc)
+    throw new Error(
+      "Could not get a document, it could have been already deleted"
+    );
   return doc;
 };
 
@@ -96,12 +101,10 @@ export const addNewBlockToTranslate: RequestHandler = async (
     await doc?.save();
 
     // Send results back to user
-    res
-      .status(200)
-      .json({
-        status: "success",
-        data: doc.translationContent[doc.translationContent.length - 1],
-      });
+    res.status(200).json({
+      status: "success",
+      data: doc.translationContent[doc.translationContent.length - 1],
+    });
   } catch (error) {
     next(error);
   }

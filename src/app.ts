@@ -1,17 +1,22 @@
 import express, { Request, Response, json } from "express";
 
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
+import { AppError, errorHandler } from "./middlewares/errorHandler";
 import httpLogger from "./utils/http-logger";
 
 import userRoutes from "./routes/users";
 import docRoutes from "./routes/docs";
-import { AppError, errorHandler } from "./middlewares/errorHandler";
 
 const app = express();
 
 // Log incoming http requests
 app.use(httpLogger);
+
+// Apply cors policy
+// TODO: Configurations - Temporary confugured as CORS-enabled for all origins
+app.use(cors());
 
 // Parse and save request body into req.body
 app.use(json({ limit: "10kb" }));
