@@ -58,7 +58,7 @@ schema.method(
 );
 
 schema.pre("save", async function (next) {
-  console.log("PRE_HASH_SAVE", this);
+  if (!this.isModified("password")) return next();
 
   await this.hashPassword();
   next();
