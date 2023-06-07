@@ -9,9 +9,7 @@ import logger from "./utils/logger";
 try {
   // Establish database connection
   const db = process.env.DATABASE_URL;
-  if (!db) {
-    throw new Error(`🫣  Need to specify database url in the .env file`);
-  }
+  if (!db) throw new Error(`🫣  Need to specify database url in the .env file`);
 
   connect(db)
     .then((con) => {

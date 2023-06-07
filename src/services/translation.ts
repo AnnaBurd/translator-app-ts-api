@@ -17,7 +17,7 @@ export interface APIMessage {
 }
 
 // Imitate api requests for tests
-const fetchAPIResponse_Fake = async (
+const fetchAPIResponseFake = async (
   prompt: Array<APIMessage>
 ): Promise<string> => {
   try {
@@ -72,7 +72,7 @@ export const translateBlock = async (
 
   const [prompt, newMessages] = generatePrompt(block, history);
 
-  // const translatedText = await fetchAPIResponse_Fake(prompt);
+  // const translatedText = await fetchAPIResponseFake(prompt);
   const translatedText = await fetchAPIResponse(prompt);
 
   const translatedBlock: TranslationBlock = { ...block, text: translatedText };

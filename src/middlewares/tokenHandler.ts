@@ -15,6 +15,9 @@ export const attachJWTToken = (user: IUser, res: Response) => {
     expiresIn: "1d",
   });
 
+  // TODO: (later) refresh token -> http only and store in db?
+  // TODO: (later) access token -> expires fast
+
   res.cookie("translator-app", token, {
     expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
     // secure: true, // TODO: set secure true and test in the production mode
