@@ -8,7 +8,8 @@ export enum Role {
 }
 
 export interface IUser {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password?: string;
   role: Role;
@@ -23,7 +24,8 @@ export interface IUserMethods {
 export type UserModel = Model<IUser, {}, IUserMethods>;
 
 const schema = new Schema<IUser, UserModel, IUserMethods>({
-  name: String,
+  firstName: String,
+  lastName: String,
   email: {
     type: String,
     required: true,
@@ -39,8 +41,8 @@ schema.index({ email: 1 });
 
 // Issue names to anonymous users
 schema.pre("save", async function (next) {
-  if (!this.name) {
-    this.name = this.email.split("@")[0];
+  if (!this.firstName) {
+    this.firstName = this.email.split("@")[0];
   }
   next();
 });

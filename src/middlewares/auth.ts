@@ -18,11 +18,14 @@ declare module "express-serve-static-core" {
 export const protectRoute: RequestHandler = async (req, res, next) => {
   logger.verbose(`Protecting route ${req.url} from not authenticated users`);
 
+  console.log(req.cookies);
+
   try {
     const currentUserInfo = await readJWTTokenValue(req);
 
     const currentUser = await User.findOne({ email: currentUserInfo.email });
 
+    console.log(currentUserInfo, req.cookies, currentUser);
     if (!currentUser) {
       throw new Error("No Such User Exists");
     }

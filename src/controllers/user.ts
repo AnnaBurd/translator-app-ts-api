@@ -6,11 +6,11 @@ import User from "../models/User";
 export const signup: RequestHandler = async (req, res, next) => {
   try {
     // Get user input from request
-    const { name, email, password } = req.body;
-    logger.verbose(`Signing up new user: ${name} (${email})`);
+    const { firstName, lastName, email, password } = req.body;
+    logger.verbose(`Signing up new user: ${firstName} (${email})`);
 
     // Validate user input
-    const newUser = new User({ name, email, password });
+    const newUser = new User({ firstName, lastName, email, password });
     await newUser.validate();
 
     // Save new user into db
@@ -22,7 +22,11 @@ export const signup: RequestHandler = async (req, res, next) => {
     // Send response back to user
     res.status(201).json({
       status: "success",
-      data: { name: newUser.name, email: newUser.email },
+      data: {
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email,
+      },
     });
   } catch (error) {
     logger.error(`🔥 Could not sign up user (${(error as Error).message})`);
@@ -51,7 +55,7 @@ export const signin: RequestHandler = async (req, res, next) => {
     // Send response back to client
     res.status(200).json({
       status: "success",
-      data: { name: user.name, email: user.email },
+      data: { name: user.firstName, email: user.email },
     });
   } catch (error) {
     logger.error(`🔥 Could not sign in user (${(error as Error).message})`);
