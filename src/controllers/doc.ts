@@ -7,6 +7,7 @@ import { IUser } from "../models/User";
 
 import logger from "../utils/logger";
 
+// TODO: UPDATE
 export const createNewDocument: RequestHandler = async (req, res, next) => {
   try {
     const currentUser = req.currentUser!;

@@ -1,39 +1,26 @@
 import { RequestHandler } from "express";
-import { HydratedDocument } from "mongoose";
 import User, { IUser, Role } from "../models/User";
-import { readJWTTokenValue } from "./tokenHandler";
+import { verifyAccessToken } from "./authTokenHandler";
 import logger from "../utils/logger";
 
 // TODO: change password / forgot password / confirm email
-// TODO: refresh token every x minutes for security?
 
 // Globally extend Express TS Request interface with "currentUser" property
 declare module "express-serve-static-core" {
   interface Request {
-    currentUser?: HydratedDocument<IUser>;
+    currentUser?: IUser;
   }
 }
 
 /* Require users to authenticate to access api */
-export const protectRoute: RequestHandler = async (req, res, next) => {
+export const protectRoute: RequestHandler = async (req, _res, next) => {
   logger.verbose(`Protecting route ${req.url} from not authenticated users`);
 
-  console.log(req.cookies);
-
   try {
-    const currentUserInfo = await readJWTTokenValue(req);
+    const currentUserInfo = await verifyAccessToken(req);
 
-    const currentUser = await User.findOne({ email: currentUserInfo.email });
-
-    console.log(currentUserInfo, req.cookies, currentUser);
-    if (!currentUser) {
-      throw new Error("No Such User Exists");
-    }
-
-    // TODO: Check if user did not change password since token was issued
-
-    // Pass current user to next middlewares
-    req.currentUser = currentUser;
+    // Pass current user info to next middlewares
+    req.currentUser = { email: currentUserInfo.email };
     next();
   } catch (error) {
     logger.error(`Could not authenticate user to route ${req.url}: ${error}`);
@@ -43,16 +30,24 @@ export const protectRoute: RequestHandler = async (req, res, next) => {
 
 /* Restrict API usage to users with specific Roles, e.g. only for Role.Admin */
 export const restrictRouteTo = (...roles: Role[]) => {
-  const restrictRoute: RequestHandler = async (req, res, next) => {
+  const restrictRoute: RequestHandler = async (req, _res, next) => {
     logger.verbose(
       `Protecting route ${req.url} from not authorized users: ${req.currentUser?.email}`
     );
 
     try {
-      const currentUser = req.currentUser!;
+      // Get from the database authorization role of the currently signed in user
+      const currentUser = await User.findOne({ email: req.currentUser!.email });
 
-      if (!roles.includes(currentUser.role))
+      if (
+        !currentUser ||
+        !currentUser.role ||
+        !roles.includes(currentUser.role)
+      )
         throw new Error("You are not autorized");
+
+      // Pass current user to next middlewares
+      req.currentUser = currentUser;
 
       next();
     } catch (error) {

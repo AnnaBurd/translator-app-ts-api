@@ -8,12 +8,13 @@ export enum Role {
 }
 
 export interface IUser {
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   password?: string;
-  role: Role;
-  docs: IDoc[];
+  role?: Role;
+  docs?: IDoc[];
+  refreshToken?: string;
 }
 
 export interface IUserMethods {
@@ -35,6 +36,7 @@ const schema = new Schema<IUser, UserModel, IUserMethods>({
   password: { type: String, required: true },
   role: { type: String, default: Role.User },
   docs: [{ type: Schema.Types.ObjectId, ref: "Doc" }],
+  refreshToken: String,
 });
 
 schema.index({ email: 1 });

@@ -7,6 +7,7 @@ export class AppError extends Error {
   }
 }
 
+// TODO: write meaningful error messages/status codes
 export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   logger.error(`Got to express error handler with error: ${err.message}`);
 

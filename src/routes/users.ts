@@ -1,12 +1,8 @@
 import { Router } from "express";
 import { protectRoute, restrictRouteTo } from "../middlewares/auth";
 import { Role } from "../models/User";
-import {
-  getAllUsersStats,
-  getUserProfile,
-  signin,
-  signup,
-} from "../controllers/user";
+import { getAllUsersStats, getUserProfile } from "../controllers/user";
+import { signup, signin, signout } from "../controllers/auth";
 
 const router = Router();
 
@@ -15,6 +11,9 @@ router.post("/signin", signin);
 
 // For signed in users:
 router.use(protectRoute);
+
+router.get("/signout", signout);
+
 router.route("/profile").get(getUserProfile).patch().delete();
 
 // router.patch("/profile"); // TODO:

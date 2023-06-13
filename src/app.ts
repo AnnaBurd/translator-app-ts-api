@@ -7,6 +7,7 @@ import { AppError, errorHandler } from "./middlewares/errorHandler";
 import httpLogger from "./utils/http-logger";
 
 import userRoutes from "./routes/users";
+import refreshAccessRoute from "./routes/refresh";
 import docRoutes from "./routes/docs";
 
 const app = express();
@@ -29,8 +30,10 @@ app.use(json({ limit: "10kb" }));
 // Parse and save request cookies into req.cookies
 app.use(cookieParser());
 
+// API Routes
 app.use("/api/users", userRoutes);
-app.use("/api/docs", docRoutes);
+app.use("/api/refresh", refreshAccessRoute);
+// app.use("/api/docs", docRoutes);
 
 app.all("*", (req: Request, _: Response, next) => {
   next(new AppError(`Can't find resource at: ${req.url}`, 404));
