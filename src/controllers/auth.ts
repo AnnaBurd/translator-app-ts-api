@@ -173,5 +173,3 @@ export const signout: RequestHandler = async (req, res, next) => {
   } catch (error) {
     logger.error(`🔥 Could not log out (${(error as Error).message})`);
     next(error);
-  }
-};
