@@ -14,7 +14,6 @@ export interface IUser {
   password?: string;
   role?: Role;
   docs?: IDoc[];
-  refreshToken?: string;
 }
 
 export interface IUserMethods {
@@ -36,7 +35,6 @@ const schema = new Schema<IUser, UserModel, IUserMethods>({
   password: { type: String, required: true },
   role: { type: String, default: Role.User },
   docs: [{ type: Schema.Types.ObjectId, ref: "Doc" }],
-  refreshToken: String,
 });
 
 schema.index({ email: 1 });

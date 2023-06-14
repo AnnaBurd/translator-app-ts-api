@@ -8,11 +8,10 @@ const router = Router();
 
 router.post("/signup", signup);
 router.post("/signin", signin);
+router.get("/signout", signout);
 
 // For signed in users:
 router.use(protectRoute);
-
-router.get("/signout", signout);
 
 router.route("/profile").get(getUserProfile).patch().delete();
 

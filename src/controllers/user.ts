@@ -4,10 +4,10 @@ import logger from "../utils/logger";
 import User from "../models/User";
 
 export const getUserProfile: RequestHandler = async (req, res, next) => {
-  logger.verbose(`Getting user info for user: ${req.currentUser?.email}`);
+  logger.verbose(`Getting user info for user with id: ${req.currentUserId}`);
 
   // TODO: filter user data to output only relevant fields
-  const currentUser = await User.findOne({ email: req.currentUser!.email });
+  const currentUser = await User.findById(req.currentUserId);
 
   // Send response back to client
   res.status(200).json({

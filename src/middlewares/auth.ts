@@ -8,6 +8,7 @@ import logger from "../utils/logger";
 // Globally extend Express TS Request interface with "currentUser" property
 declare module "express-serve-static-core" {
   interface Request {
+    currentUserId?: string;
     currentUser?: IUser;
   }
 }
@@ -20,7 +21,7 @@ export const protectRoute: RequestHandler = async (req, _res, next) => {
     const currentUserInfo = await verifyAccessToken(req);
 
     // Pass current user info to next middlewares
-    req.currentUser = { email: currentUserInfo.email };
+    req.currentUserId = currentUserInfo.userid;
     next();
   } catch (error) {
     logger.error(`Could not authenticate user to route ${req.url}: ${error}`);
@@ -37,7 +38,7 @@ export const restrictRouteTo = (...roles: Role[]) => {
 
     try {
       // Get from the database authorization role of the currently signed in user
-      const currentUser = await User.findOne({ email: req.currentUser!.email });
+      const currentUser = await User.findById(req.currentUserId);
 
       if (
         !currentUser ||

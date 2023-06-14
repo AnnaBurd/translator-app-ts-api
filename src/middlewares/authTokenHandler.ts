@@ -3,13 +3,14 @@ import { Request } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 
 import { IUser } from "../models/User";
+import { HydratedDocument } from "mongoose";
 
 interface UserInfoPayload extends JwtPayload {
-  email: string;
+  userid: string;
 }
 
-const issueRefreshToken = (user: IUser) => {
-  const payload: UserInfoPayload = { email: user.email };
+const issueRefreshToken = (user: HydratedDocument<IUser>) => {
+  const payload: UserInfoPayload = { userid: user._id.toString() };
 
   const token = jwt.sign(
     payload,
@@ -22,11 +23,9 @@ const issueRefreshToken = (user: IUser) => {
   return token;
 };
 
-export const issueAccessToken = (user: IUser) => {
-  const payload: UserInfoPayload = { email: user.email };
-
+export const issueAccessTokenById = (userid: string) => {
   const token = jwt.sign(
-    payload,
+    { userid },
     process.env.ACCESS_TOKEN_TOP_SECRET as string,
     {
       expiresIn: "30s", // TODO: in prod:  set 5-15 minutes
@@ -36,7 +35,11 @@ export const issueAccessToken = (user: IUser) => {
   return token;
 };
 
-export const issueJWTTokens = (user: IUser) => {
+export const issueAccessToken = (user: HydratedDocument<IUser>) => {
+  return issueAccessTokenById(user._id.toString());
+};
+
+export const issueJWTTokens = (user: HydratedDocument<IUser>) => {
   const accessToken = issueAccessToken(user);
   const refreshToken = issueRefreshToken(user);
 
@@ -76,7 +79,7 @@ export const verifyRefreshToken = async (
   // Note: browser on client side should automatically attach refresh token from http-only cookie to the request
   // Requires to configure cors policies, also requires to configure credentials: include on the client fetch api.
 
-  const encodedToken = req.cookies["translator-app"];
+  const encodedToken = req.cookies["translator-app-refresh-token"];
   if (!encodedToken) throw new Error("No Refresh Token Provided");
 
   const decodedToken = await jwtVerify(

@@ -1,11 +1,13 @@
 import { RequestHandler, Response } from "express";
 import {
   issueAccessToken,
+  issueAccessTokenById,
   issueJWTTokens,
   verifyRefreshToken,
 } from "../middlewares/authTokenHandler";
 import logger from "../utils/logger";
 import User from "../models/User";
+import RefreshToken from "../models/RefreshToken";
 
 /* Explanation Notes:
 Authentication is based on usage of refresh and access jwt tokens:
@@ -25,8 +27,10 @@ client (when token expires) -> request access refresh (provide refresh token (ha
 server -> issue new access token ...
 */
 
+const REFRESH_TOKEN_NAME = "translator-app-refresh-token";
+
 const attachRefreshToken = (value: string, res: Response) => {
-  res.cookie("translator-app", value, {
+  res.cookie(REFRESH_TOKEN_NAME, value, {
     maxAge: 24 * 60 * 60 * 1000,
     // sameSite: "none", // TODO: fix for prod
     secure: false, // TODO: set secure true and test in the production mode
@@ -39,8 +43,8 @@ const attachRefreshToken = (value: string, res: Response) => {
 // Make client side delete cookie (?)
 const detatchRefreshToken = (res: Response) => {
   // TODO: make sure cookie options are the same as when attaching cookie
-  // Todo: test if cookie gets deleted in prod mode
-  res.clearCookie("translator-app", { httpOnly: true }); // secure: true
+  // TODO: test if cookie gets deleted in prod mode
+  res.clearCookie(REFRESH_TOKEN_NAME, { httpOnly: true }); // secure: true
 };
 
 export const signup: RequestHandler = async (req, res, next) => {
@@ -54,14 +58,18 @@ export const signup: RequestHandler = async (req, res, next) => {
     await newUser.validate();
 
     // Generate access and refresh jwt tokens
-    const [accessToken, refreshToken] = issueJWTTokens(newUser);
+    const [accessToken, refreshTokenValue] = issueJWTTokens(newUser);
 
     // Save new user into db (refresh token is also stored in database to allow log-out functionality)
-    newUser.refreshToken = refreshToken;
     await newUser.save({ validateBeforeSave: false });
+    await new RefreshToken({
+      user: newUser,
+      value: refreshTokenValue,
+      expires: new Date(new Date().getTime() + 86400000 * 15),
+    }).save();
 
     // Send auth tokens to user
-    attachRefreshToken(refreshToken, res)
+    attachRefreshToken(refreshTokenValue, res)
       .status(201)
       .json({
         status: "success",
@@ -94,14 +102,17 @@ export const signin: RequestHandler = async (req, res, next) => {
     }
 
     // Generate signed in user token
-    const [accessToken, refreshToken] = issueJWTTokens(user);
+    const [accessToken, refreshTokenValue] = issueJWTTokens(user);
 
     // Save new refresh token to the database
-    user.refreshToken = refreshToken;
-    await user.save({ validateBeforeSave: false });
+    await new RefreshToken({
+      user: user,
+      value: refreshTokenValue,
+      expires: new Date(new Date().getTime() + 86400000 * 15),
+    }).save();
 
     // Send response back to client
-    attachRefreshToken(refreshToken, res)
+    attachRefreshToken(refreshTokenValue, res)
       .status(200)
       .json({
         status: "success",
@@ -120,24 +131,24 @@ export const signin: RequestHandler = async (req, res, next) => {
 
 export const refreshAccess: RequestHandler = async (req, res, next) => {
   try {
-    // Verify refresh token
-    const [currentUserInfo, refreshToken] = await verifyRefreshToken(req);
+    // Decode token payload value from the user request
+    const [currentUserInfo, refreshTokenValue] = await verifyRefreshToken(req);
 
-    // Check that user still exists in the database and that refresh token is still valid
-    const currentUser = await User.findOne({ email: currentUserInfo.email });
-    if (!currentUser) {
-      detatchRefreshToken(res);
-      throw new Error("No Such User Exists (Anymore)");
-    }
+    // Check that refresh token is still valid
+    // Note: Refresh token can expire, so if the database TTL policy works correctly expired tokens should be automatically removed
+    const issuedRefreshTokens = await RefreshToken.find({
+      user: currentUserInfo.userid,
+    });
 
-    // TODO: Check if user did not change password since token was issued (when change password functionality is implemented)
-    if (currentUser.refreshToken !== refreshToken) {
+    if (
+      !issuedRefreshTokens.find((token) => token.value === refreshTokenValue)
+    ) {
       detatchRefreshToken(res);
       throw new Error("Refresh token is not valid (Anymore)");
     }
 
     // Re-Issue access token
-    const accessToken = issueAccessToken(currentUser);
+    const accessToken = issueAccessTokenById(currentUserInfo.userid);
     res.status(201).json({
       status: "success",
       accessToken,
@@ -155,15 +166,16 @@ export const refreshAccess: RequestHandler = async (req, res, next) => {
 // Note: on client should also delete access token
 export const signout: RequestHandler = async (req, res, next) => {
   try {
-    const currentlySignedInUser = req.currentUser!;
+    // Verify refresh token (if token is valid, returns signed in user id)
+    const [currentUserInfo, refreshTokenValue] = await verifyRefreshToken(req);
 
-    // Delete refresh token in database
-    await User.findOneAndUpdate(
-      { email: currentlySignedInUser.email },
-      { refreshToken: "signed-out" }
-    );
+    // Delete refresh token from the database
+    await RefreshToken.findOneAndRemove({
+      user: currentUserInfo.userid,
+      value: refreshTokenValue,
+    });
 
-    // Delete resresh token cookie
+    // Inform browser on client side that refresh token cookie should be deleted
     detatchRefreshToken(res);
 
     res.status(204).json({
