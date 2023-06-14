@@ -3,24 +3,18 @@ import { HydratedDocument } from "mongoose";
 
 import Doc, { IDoc, Block } from "../models/Doc";
 import { translateBlock } from "../services/translation";
-import { IUser } from "../models/User";
+import User, { IUser } from "../models/User";
 
 import logger from "../utils/logger";
 
-// TODO: UPDATE
 export const createNewDocument: RequestHandler = async (req, res, next) => {
   try {
-    const currentUser = req.currentUser!;
-
     // Save new document to database
     const newDocument = await new Doc({
+      owner: req.currentUserId,
       title: req.body.title,
       lang: req.body.language,
     }).save();
-
-    // Update list of user's documents
-    currentUser.docs.push(newDocument);
-    await currentUser.save({ validateBeforeSave: false });
 
     res.status(201).json({ status: "success", doc: newDocument });
   } catch (error) {
@@ -33,14 +27,10 @@ export const createNewDocument: RequestHandler = async (req, res, next) => {
 
 export const getUserDocuments: RequestHandler = async (req, res, next) => {
   try {
-    const currentUser = req.currentUser!;
+    // TODO: filter
+    const userDocuments = await Doc.find({ owner: req.currentUserId });
 
-    await currentUser.populate({
-      path: "docs",
-      select: "title lang createdAt changedAt",
-    });
-
-    res.status(200).json({ status: "success", docs: currentUser.docs });
+    res.status(200).json({ status: "success", docs: userDocuments });
   } catch (error) {
     logger.error(
       `🔥 Could not get user's documents. (${(error as Error).message}`
@@ -49,29 +39,20 @@ export const getUserDocuments: RequestHandler = async (req, res, next) => {
   }
 };
 
-const getUserDocument = async (user: IUser, docId: string) => {
-  console.log(user);
-
-  // Make dure that requested document belongs to user
-  if (
-    !user.docs.some(
-      (doc) => (doc as HydratedDocument<IDoc>)._id.toString() === docId
-    )
-  )
-    throw new Error("You have no such document");
-
-  // Fetch document from database
+const getUserDocument = async (ownerId: string, docId: string) => {
+  // Fetch document from database and make dure that requested document belongs to user
   const doc = await Doc.findById(docId);
-  if (!doc)
+  if (!doc || !(doc.owner.toString() === ownerId))
     throw new Error(
       "Could not get a document, it could have been already deleted"
     );
+
   return doc;
 };
 
 export const readUserDocument: RequestHandler = async (req, res, next) => {
   try {
-    const doc = await getUserDocument(req.currentUser!, req.params.docId);
+    const doc = await getUserDocument(req.currentUserId!, req.params.docId);
 
     res.status(200).json({ status: "success", doc });
   } catch (error) {
@@ -86,7 +67,7 @@ export const addNewBlockToTranslate: RequestHandler = async (
 ) => {
   try {
     // Get input data
-    const doc = await getUserDocument(req.currentUser!, req.params.docId);
+    const doc = await getUserDocument(req.currentUserId!, req.params.docId);
     const newBlock: Block = req.body.block;
 
     // Call translation service

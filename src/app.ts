@@ -33,7 +33,7 @@ app.use(cookieParser());
 // API Routes
 app.use("/api/users", userRoutes);
 app.use("/api/refresh", refreshAccessRoute);
-// app.use("/api/docs", docRoutes);
+app.use("/api/docs", docRoutes);
 
 app.all("*", (req: Request, _: Response, next) => {
   next(new AppError(`Can't find resource at: ${req.url}`, 404));

@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose";
 import { TranslationBlock } from "./Translation";
 import { APIMessage } from "../services/translation";
+import { IUser } from "./User";
 
 export enum Language {
   Ru = "ru",
@@ -14,6 +15,7 @@ export interface Block {
 }
 
 export interface IDoc {
+  owner: IUser;
   title: string;
   originLang: Language;
   translationLang: Language;
@@ -24,7 +26,13 @@ export interface IDoc {
   changedAt: Date;
 }
 
+// docs: [{ type: Schema.Types.ObjectId, ref: "Doc" }],
+
 const schema = new Schema<IDoc>({
+  owner: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
   title: {
     type: String,
     required: true,
