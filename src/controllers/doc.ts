@@ -9,14 +9,20 @@ import logger from "../utils/logger";
 
 export const createNewDocument: RequestHandler = async (req, res, next) => {
   try {
-    // Save new document to database
-    const newDocument = await new Doc({
-      owner: req.currentUserId,
+    // Validate data
+    // TODO: reuse yup schema?
+
+    const newdocdata = {
       title: req.body.title,
       lang: req.body.language,
-    }).save();
+      translationLang: req.body.translationLanguage,
+      owner: req.currentUserId,
+    };
 
-    res.status(201).json({ status: "success", doc: newDocument });
+    // Save new document to database
+    const newDocument = await new Doc(newdocdata).save();
+
+    res.status(201).json({ status: "success", data: newDocument });
   } catch (error) {
     logger.error(
       `🔥 Could not create new document. (${(error as Error).message}`

@@ -17,7 +17,7 @@ export interface Block {
 export interface IDoc {
   owner: IUser;
   title: string;
-  originLang: Language;
+  lang: Language;
   translationLang: Language;
   content: Array<Block>;
   translationContent: Array<TranslationBlock>;
@@ -39,7 +39,7 @@ const schema = new Schema<IDoc>({
     trim: true,
     default: "Document",
   },
-  originLang: {
+  lang: {
     type: String,
     required: true,
     default: Language.Ru,
