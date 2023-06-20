@@ -77,6 +77,7 @@ export const signup: RequestHandler = async (req, res, next) => {
           firstName: newUser.firstName,
           lastName: newUser.lastName,
           email: newUser.email,
+          newUser: true,
         },
         accessToken,
       });
@@ -149,13 +150,61 @@ export const refreshAccess: RequestHandler = async (req, res, next) => {
 
     // Re-Issue access token
     const accessToken = issueAccessTokenById(currentUserInfo.userid);
-    res.status(201).json({
+    res.status(200).json({
       status: "success",
       accessToken,
     });
   } catch (error) {
     logger.error(
       `🔥 Could not re-issue access token. Please sign in again (${
+        (error as Error).message
+      })`
+    );
+    next(error);
+  }
+};
+
+// Silent signin - the only difference from the refresh is that this one returns user data as well
+// TODO: can be refactored to reduce code duplication
+export const silentSignIn: RequestHandler = async (req, res, next) => {
+  try {
+    // Decode token payload value from the user request
+    const [currentUserInfo, refreshTokenValue] = await verifyRefreshToken(req);
+
+    // Check that refresh token is still valid
+    // Note: Refresh token can expire, so if the database TTL policy works correctly expired tokens should be automatically removed
+    const issuedRefreshTokens = await RefreshToken.find({
+      user: currentUserInfo.userid,
+    });
+
+    if (
+      !issuedRefreshTokens.find((token) => token.value === refreshTokenValue)
+    ) {
+      detatchRefreshToken(res);
+      throw new Error("Refresh token is not valid (Anymore)");
+    }
+
+    // Re-Issue access token
+    const accessToken = issueAccessTokenById(currentUserInfo.userid);
+
+    const user = await User.findById(currentUserInfo.userid);
+
+    if (!user) {
+      throw new Error("User does not exist (Anymore)");
+    }
+
+    res.status(200).json({
+      status: "success",
+      accessToken,
+      data: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    logger.error(
+      `🔥 Could not re-issue access token. Please sign (${
         (error as Error).message
       })`
     );

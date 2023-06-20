@@ -14,8 +14,8 @@ export const createNewDocument: RequestHandler = async (req, res, next) => {
 
     const newdocdata = {
       title: req.body.title,
-      lang: req.body.language,
-      translationLang: req.body.translationLanguage,
+      lang: req.body.lang,
+      translationLang: req.body.translationLang,
       owner: req.currentUserId,
     };
 
@@ -34,9 +34,24 @@ export const createNewDocument: RequestHandler = async (req, res, next) => {
 export const getUserDocuments: RequestHandler = async (req, res, next) => {
   try {
     // TODO: filter
+    // TODO: filter only relevant data
+    // TODO: pagination
     const userDocuments = await Doc.find({ owner: req.currentUserId });
 
-    res.status(200).json({ status: "success", docs: userDocuments });
+    // Generate output including doc text preview strings
+    const data = userDocuments.map((doc) => {
+      return {
+        _id: doc._id,
+        title: doc.title,
+        lang: doc.lang,
+        translationLang: doc.translationLang,
+        changedAt: doc.changedAt,
+        textPreview: doc.content[0]?.text || "",
+        translationPreview: doc.translationContent[0]?.text || "",
+      };
+    });
+
+    res.status(200).json({ status: "success", data });
   } catch (error) {
     logger.error(
       `🔥 Could not get user's documents. (${(error as Error).message}`
@@ -60,7 +75,7 @@ export const readUserDocument: RequestHandler = async (req, res, next) => {
   try {
     const doc = await getUserDocument(req.currentUserId!, req.params.docId);
 
-    res.status(200).json({ status: "success", doc });
+    res.status(200).json({ status: "success", data: doc });
   } catch (error) {
     next(error);
   }
@@ -75,6 +90,8 @@ export const addNewBlockToTranslate: RequestHandler = async (
     // Get input data
     const doc = await getUserDocument(req.currentUserId!, req.params.docId);
     const newBlock: Block = req.body.block;
+
+    console.log(req.body);
 
     // Call translation service
     const [translatedNewBlock, newMessages] = await translateBlock(

@@ -14,9 +14,11 @@ export interface Block {
   text: string;
 }
 
+// TODO: generate unique per user documents slugs for a nicer url
 export interface IDoc {
   owner: IUser;
   title: string;
+  // slug: string;
   lang: Language;
   translationLang: Language;
   content: Array<Block>;
@@ -39,6 +41,7 @@ const schema = new Schema<IDoc>({
     trim: true,
     default: "Document",
   },
+  // slug: { type: String, required: true },
   lang: {
     type: String,
     required: true,
@@ -79,6 +82,12 @@ const schema = new Schema<IDoc>({
   changedAt: {
     type: Date,
   },
+});
+
+// Update changed at timestamp on document save
+schema.pre("save", async function (next) {
+  this.changedAt = new Date();
+  return next();
 });
 
 const Doc = model<IDoc>("Doc", schema);

@@ -72,8 +72,8 @@ export const translateBlock = async (
 
   const [prompt, newMessages] = generatePrompt(block, history);
 
-  // const translatedText = await fetchAPIResponseFake(prompt);
-  const translatedText = await fetchAPIResponse(prompt);
+  const translatedText = await fetchAPIResponseFake(prompt);
+  // const translatedText = await fetchAPIResponse(prompt);
 
   const translatedBlock: TranslationBlock = { ...block, text: translatedText };
   newMessages.push({
