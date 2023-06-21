@@ -37,9 +37,8 @@ const schema = new Schema<IDoc>({
   },
   title: {
     type: String,
-    required: true,
     trim: true,
-    default: "Document",
+    default: "Untitled document",
   },
   // slug: { type: String, required: true },
   lang: {
