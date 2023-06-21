@@ -46,8 +46,8 @@ export const getUserDocuments: RequestHandler = async (req, res, next) => {
         lang: doc.lang,
         translationLang: doc.translationLang,
         changedAt: doc.changedAt,
-        textPreview: doc.content[0]?.text || "",
-        translationPreview: doc.translationContent[0]?.text || "",
+        textPreview: doc.content[0]?.text.slice(0, 30) || "",
+        translationPreview: doc.translationContent[0]?.text.slice(0, 50) || "",
       };
     });
 
