@@ -31,9 +31,9 @@ const REFRESH_TOKEN_NAME = "translator-app-refresh-token";
 
 const attachRefreshToken = (value: string, res: Response) => {
   res.cookie(REFRESH_TOKEN_NAME, value, {
-    maxAge: 24 * 60 * 60 * 1000,
-    // sameSite: "none", // TODO: fix for prod
-    secure: false, // TODO: set secure true and test in the production mode
+    maxAge: 24 * 60 * 60 * 1000, // TODO: set up to 15 days
+    sameSite: "none", // TODO: fix for prod
+    secure: true, // TODO: set secure for https connections
     httpOnly: true,
   });
 
