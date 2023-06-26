@@ -1,9 +1,6 @@
 import { RequestHandler } from "express";
-import { HydratedDocument } from "mongoose";
-
-import Doc, { IDoc, Block } from "../models/Doc";
+import Doc, { Block } from "../models/Doc";
 import { translateBlock } from "../services/translation";
-import User, { IUser } from "../models/User";
 
 import logger from "../utils/logger";
 
@@ -46,8 +43,8 @@ export const getUserDocuments: RequestHandler = async (req, res, next) => {
         lang: doc.lang,
         translationLang: doc.translationLang,
         changedAt: doc.changedAt,
-        textPreview: doc.content[0]?.text.slice(0, 30) || "",
-        translationPreview: doc.translationContent[0]?.text.slice(0, 50) || "",
+        textPreview: doc.content[0]?.text.slice(0, 200) || "",
+        translationPreview: doc.translationContent[0]?.text.slice(0, 200) || "",
       };
     });
 
@@ -115,12 +112,15 @@ export const addNewBlockToTranslate: RequestHandler = async (
   }
 };
 
-// export const editUserDocument: RequestHandler = async (req, res, next) => {
-//   try {
-//     const doc = await getUserDocument(req.currentUser!, req.params.docId);
+export const deleteUserDocument: RequestHandler = async (req, res, next) => {
+  try {
+    const ownerId = req.currentUserId!;
+    const docId = req.params.docId;
 
-//     res.status(200).json({ status: "success", doc });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
+    await Doc.deleteOne({ _id: docId, owner: ownerId });
+
+    res.status(204).json({ status: "success" });
+  } catch (error) {
+    next(error);
+  }
+};

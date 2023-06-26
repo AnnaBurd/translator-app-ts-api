@@ -5,6 +5,7 @@ import {
   readUserDocument,
   getUserDocuments,
   addNewBlockToTranslate,
+  deleteUserDocument,
 } from "../controllers/doc";
 
 const router = Router();
@@ -18,6 +19,6 @@ router
   .get(readUserDocument)
   .post(addNewBlockToTranslate)
   .patch()
-  .delete();
+  .delete(deleteUserDocument);
 
 export default router;
