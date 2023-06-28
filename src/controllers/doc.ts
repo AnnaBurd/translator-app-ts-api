@@ -1,6 +1,9 @@
-import { RequestHandler } from "express";
+import e, { RequestHandler } from "express";
 import Doc, { Block } from "../models/Doc";
-import { translateBlock } from "../services/translation";
+import {
+  TranslationOption,
+  translateBlockContent,
+} from "../services/translation";
 
 import logger from "../utils/logger";
 
@@ -78,35 +81,122 @@ export const readUserDocument: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const addNewBlockToTranslate: RequestHandler = async (
-  req,
-  res,
-  next
-) => {
+// export const addNewBlockToTranslate: RequestHandler = async (
+//   req,
+//   res,
+//   next
+// ) => {
+//   try {
+//     // Get input data
+//     const doc = await getUserDocument(req.currentUserId!, req.params.docId);
+//     const newBlock: Block = req.body.block;
+//     const blockIndex: number =
+//       req.body.blockPositionIndex || doc.content.length;
+
+//     // Call translation service
+//     const [translatedNewBlock, newMessages] = await translateBlockContent(
+//       newBlock,
+//       doc.messagesHistory,
+//       {
+//         originalLanguage: doc.lang,
+//         targetLanguage: doc.translationLang,
+//         type: TranslationOption.newOriginalBlock,
+//       }
+//     );
+
+//     // Save results and history to the database
+//     doc.content.splice(blockIndex, 0, newBlock);
+//     doc.translationContent.splice(blockIndex, 0, translatedNewBlock);
+//     doc.messagesHistory.push(...newMessages);
+//     await doc?.save();
+
+//     // Send results back to user
+//     res.status(200).json({
+//       status: "success",
+//       data: doc.translationContent[blockIndex],
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
+export const editUserDocument: RequestHandler = async (req, res, next) => {
   try {
-    // Get input data
+    // Get requested document from the database
     const doc = await getUserDocument(req.currentUserId!, req.params.docId);
-    const newBlock: Block = req.body.block;
 
-    console.log(req.body);
-
-    // Call translation service
-    const [translatedNewBlock, newMessages] = await translateBlock(
-      newBlock,
-      doc.messagesHistory
+    console.log(
+      "editUserDocument",
+      req.body.block,
+      req.body.editOption,
+      req.body.blockPositionIndex
     );
 
-    // Save results and history to the database
-    doc.content.push(newBlock);
-    doc.translationContent.push(translatedNewBlock);
-    doc.messagesHistory.push(...newMessages);
-    await doc?.save();
+    // Get input data
+    const inputBlock: Block = req.body.block;
+    const editOption: TranslationOption =
+      req.body.translationOption || TranslationOption.newOriginalBlock;
+    const inputBlockIndex: number =
+      editOption === TranslationOption.newOriginalBlock
+        ? req.body.blockPositionIndex ?? doc.content.length - 1
+        : doc.content.findIndex(
+            (block) => block.blockId === inputBlock.blockId
+          );
 
-    // Send results back to user
-    res.status(200).json({
-      status: "success",
-      data: doc.translationContent[doc.translationContent.length - 1],
-    });
+    if (inputBlockIndex === -1) throw new Error("Block not found");
+
+    console.log("inputBlock", inputBlock);
+    console.log("editOption", editOption);
+    console.log("inputBlockIndex", inputBlockIndex);
+
+    if (
+      editOption === TranslationOption.newOriginalBlock ||
+      editOption === TranslationOption.editOriginalBlock
+    ) {
+      // Update translation after original text was changed
+      const [translatedBlock, newMessages] = await translateBlockContent(
+        inputBlock,
+        doc.messagesHistory,
+        {
+          originalLanguage: doc.lang,
+          targetLanguage: doc.translationLang,
+          type: editOption,
+        }
+      );
+
+      // Save results and history to the database
+
+      doc.content.splice(
+        inputBlockIndex,
+        editOption === TranslationOption.newOriginalBlock ? 0 : 1,
+        inputBlock
+      );
+      doc.translationContent.splice(
+        inputBlockIndex,
+        editOption === TranslationOption.newOriginalBlock ? 0 : 1,
+        translatedBlock
+      );
+
+      if (editOption !== TranslationOption.newOriginalBlock) {
+        doc.messagesHistory.forEach((message) => {
+          if (message.relevantBlockId === inputBlock.blockId) {
+            message.attachToPrompt = false;
+          }
+        });
+      }
+
+      doc.messagesHistory.push(...newMessages);
+
+      await doc?.save();
+
+      // Send results back to user
+      return res.status(200).json({
+        status: "success",
+        data: translatedBlock,
+      });
+    }
+
+    res.status(500).json({ "not implemented": "yet" });
   } catch (error) {
     next(error);
   }

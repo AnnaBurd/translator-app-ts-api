@@ -4,8 +4,8 @@ import {
   createNewDocument,
   readUserDocument,
   getUserDocuments,
-  addNewBlockToTranslate,
   deleteUserDocument,
+  editUserDocument,
 } from "../controllers/doc";
 
 const router = Router();
@@ -17,8 +17,7 @@ router.route("/").get(getUserDocuments).post(createNewDocument);
 router
   .route("/:docId")
   .get(readUserDocument)
-  .post(addNewBlockToTranslate)
-  .patch()
+  .patch(editUserDocument)
   .delete(deleteUserDocument);
 
 export default router;

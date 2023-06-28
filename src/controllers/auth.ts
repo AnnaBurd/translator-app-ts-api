@@ -32,8 +32,8 @@ const REFRESH_TOKEN_NAME = "translator-app-refresh-token";
 const attachRefreshToken = (value: string, res: Response) => {
   res.cookie(REFRESH_TOKEN_NAME, value, {
     maxAge: 24 * 60 * 60 * 1000, // TODO: set up to 15 days
-    sameSite: "none", // TODO: fix for prod
-    secure: true, // TODO: set secure for https connections
+    // sameSite: "none", // TODO: fix for prod
+    secure: false, // TODO: set secure for https connections
     httpOnly: true,
   });
 
@@ -67,6 +67,13 @@ export const signup: RequestHandler = async (req, res, next) => {
       value: refreshTokenValue,
       expires: new Date(new Date().getTime() + 86400000 * 15),
     }).save();
+
+    // Imitate long server response
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(console.log("Recieved API RESPONSE"));
+      }, 10000);
+    });
 
     // Send auth tokens to user
     attachRefreshToken(refreshTokenValue, res)
@@ -111,6 +118,13 @@ export const signin: RequestHandler = async (req, res, next) => {
       value: refreshTokenValue,
       expires: new Date(new Date().getTime() + 86400000 * 15),
     }).save();
+
+    // Imitate long server response
+    // await new Promise((resolve) => {
+    //   setTimeout(() => {
+    //     resolve(console.log("Recieved API RESPONSE"));
+    //   }, 3000);
+    // });
 
     // Send response back to client
     attachRefreshToken(refreshTokenValue, res)
@@ -183,6 +197,13 @@ export const silentSignIn: RequestHandler = async (req, res, next) => {
       detatchRefreshToken(res);
       throw new Error("Refresh token is not valid (Anymore)");
     }
+
+    // Imitate long server response
+    // await new Promise((resolve) => {
+    //   setTimeout(() => {
+    //     resolve(console.log("Recieved API RESPONSE"));
+    //   }, 1000);
+    // });
 
     // Re-Issue access token
     const accessToken = issueAccessTokenById(currentUserInfo.userid);
