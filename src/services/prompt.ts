@@ -61,7 +61,6 @@ export const generatePrompt = (
 
     newMessages.push({
       ...firstSystemMessage,
-      relevantBlockId: block.blockId,
       attachToPrompt: true,
     });
   } else {
@@ -86,7 +85,7 @@ export const generatePrompt = (
   newMessages.push({
     ...newPromptMessage,
     relevantBlockId: block.blockId,
-    attachToPrompt: true,
+    attachToPrompt: false,
   });
 
   console.log("Generated prompt: ", prompt);

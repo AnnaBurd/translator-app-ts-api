@@ -81,52 +81,13 @@ export const readUserDocument: RequestHandler = async (req, res, next) => {
   }
 };
 
-// export const addNewBlockToTranslate: RequestHandler = async (
-//   req,
-//   res,
-//   next
-// ) => {
-//   try {
-//     // Get input data
-//     const doc = await getUserDocument(req.currentUserId!, req.params.docId);
-//     const newBlock: Block = req.body.block;
-//     const blockIndex: number =
-//       req.body.blockPositionIndex || doc.content.length;
-
-//     // Call translation service
-//     const [translatedNewBlock, newMessages] = await translateBlockContent(
-//       newBlock,
-//       doc.messagesHistory,
-//       {
-//         originalLanguage: doc.lang,
-//         targetLanguage: doc.translationLang,
-//         type: TranslationOption.newOriginalBlock,
-//       }
-//     );
-
-//     // Save results and history to the database
-//     doc.content.splice(blockIndex, 0, newBlock);
-//     doc.translationContent.splice(blockIndex, 0, translatedNewBlock);
-//     doc.messagesHistory.push(...newMessages);
-//     await doc?.save();
-
-//     // Send results back to user
-//     res.status(200).json({
-//       status: "success",
-//       data: doc.translationContent[blockIndex],
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-
 export const editUserDocument: RequestHandler = async (req, res, next) => {
   try {
     // Get requested document from the database
     const doc = await getUserDocument(req.currentUserId!, req.params.docId);
 
     console.log(
-      "editUserDocument",
+      " ✍🏻✍🏻✍🏻editUserDocument",
       req.body.block,
       req.body.editOption,
       req.body.blockPositionIndex
@@ -134,11 +95,16 @@ export const editUserDocument: RequestHandler = async (req, res, next) => {
 
     // Get input data
     const inputBlock: Block = req.body.block;
+
+    // Make sure that block length is acceptable, even though on the frontend block length is limited
+    if (inputBlock.text.length > 3000)
+      inputBlock.text = inputBlock.text.slice(0, 3000);
+
     const editOption: TranslationOption =
       req.body.translationOption || TranslationOption.newOriginalBlock;
     const inputBlockIndex: number =
       editOption === TranslationOption.newOriginalBlock
-        ? req.body.blockPositionIndex ?? doc.content.length - 1
+        ? req.body.blockPositionIndex ?? doc.content.length
         : doc.content.findIndex(
             (block) => block.blockId === inputBlock.blockId
           );
@@ -209,7 +175,7 @@ export const deleteUserDocument: RequestHandler = async (req, res, next) => {
 
     await Doc.deleteOne({ _id: docId, owner: ownerId });
 
-    res.status(204).json({ status: "success" });
+    res.status(204).json({ status: "success", data: "deleted" });
   } catch (error) {
     next(error);
   }

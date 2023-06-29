@@ -3,7 +3,11 @@ import express, { Request, Response, json } from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
-import { AppError, errorHandler } from "./middlewares/errorHandler.js";
+import {
+  AppError,
+  AppErrorName,
+  errorHandler,
+} from "./middlewares/errorHandler.js";
 import httpLogger from "./utils/http-logger.js";
 
 import userRoutes from "./routes/users.js";
@@ -36,7 +40,12 @@ app.use("/api/refresh", refreshAccessRoute);
 app.use("/api/docs", docRoutes);
 
 app.all("*", (req: Request, _: Response, next) => {
-  next(new AppError(`Can't find resource at: ${req.url}`, 404));
+  next(
+    new AppError(
+      AppErrorName.ResourceNotFoundError,
+      `Can't find resource at: ${req.url}`
+    )
+  );
 });
 
 app.use(errorHandler);

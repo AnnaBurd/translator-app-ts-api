@@ -5,7 +5,7 @@ const queue = new PQueue({
   timeout: 1000 * 60,
   throwOnTimeout: true,
   intervalCap: 2,
-  interval: 1000 * 40,
+  interval: 1000 * 1,
 });
 
 let count = 0;
