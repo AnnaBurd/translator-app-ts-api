@@ -1,9 +1,6 @@
 import e, { RequestHandler } from "express";
 import Doc, { Block } from "../models/Doc.js";
-import {
-  TranslationOption,
-  translateBlockContent,
-} from "../services/translation.js";
+import { EditOption, translateBlockContent } from "../services/translation.js";
 
 import logger from "../utils/logger.js";
 
@@ -93,32 +90,33 @@ export const editUserDocument: RequestHandler = async (req, res, next) => {
       req.body.blockPositionIndex
     );
 
-    // Get input data
-    const inputBlock: Block = req.body.block;
+    const editOption: EditOption =
+      req.body.translationOption || EditOption.newOriginalBlock;
 
-    // Make sure that block length is acceptable, even though on the frontend block length is limited
-    if (inputBlock.text.length > 3000)
-      inputBlock.text = inputBlock.text.slice(0, 3000);
-
-    const editOption: TranslationOption =
-      req.body.translationOption || TranslationOption.newOriginalBlock;
-    const inputBlockIndex: number =
-      editOption === TranslationOption.newOriginalBlock
-        ? req.body.blockPositionIndex ?? doc.content.length
-        : doc.content.findIndex(
-            (block) => block.blockId === inputBlock.blockId
-          );
-
-    if (inputBlockIndex === -1) throw new Error("Block not found");
-
-    console.log("inputBlock", inputBlock);
-    console.log("editOption", editOption);
-    console.log("inputBlockIndex", inputBlockIndex);
+    // console.log("inputBlock", inputBlock);
+    // console.log("editOption", editOption);
+    // console.log("inputBlockIndex", inputBlockIndex);
 
     if (
-      editOption === TranslationOption.newOriginalBlock ||
-      editOption === TranslationOption.editOriginalBlock
+      editOption === EditOption.newOriginalBlock ||
+      editOption === EditOption.editOriginalBlock
     ) {
+      // Get input data
+      const inputBlock: Block = req.body.block;
+
+      // Make sure that block length is acceptable, even though on the frontend block length is limited
+      if (inputBlock.text.length > 3000)
+        inputBlock.text = inputBlock.text.slice(0, 3000);
+
+      const inputBlockIndex: number =
+        editOption === EditOption.newOriginalBlock
+          ? req.body.blockPositionIndex ?? doc.content.length
+          : doc.content.findIndex(
+              (block) => block.blockId === inputBlock.blockId
+            );
+
+      if (inputBlockIndex === -1) throw new Error("Block not found");
+
       // Update translation after original text was changed
       const [translatedBlock, newMessages] = await translateBlockContent(
         inputBlock,
@@ -134,16 +132,16 @@ export const editUserDocument: RequestHandler = async (req, res, next) => {
 
       doc.content.splice(
         inputBlockIndex,
-        editOption === TranslationOption.newOriginalBlock ? 0 : 1,
+        editOption === EditOption.newOriginalBlock ? 0 : 1,
         inputBlock
       );
       doc.translationContent.splice(
         inputBlockIndex,
-        editOption === TranslationOption.newOriginalBlock ? 0 : 1,
+        editOption === EditOption.newOriginalBlock ? 0 : 1,
         translatedBlock
       );
 
-      if (editOption !== TranslationOption.newOriginalBlock) {
+      if (editOption !== EditOption.newOriginalBlock) {
         doc.messagesHistory.forEach((message) => {
           if (message.relevantBlockId === inputBlock.blockId) {
             message.attachToPrompt = false;
@@ -162,7 +160,25 @@ export const editUserDocument: RequestHandler = async (req, res, next) => {
       });
     }
 
-    res.status(500).json({ "not implemented": "yet" });
+    if (editOption === EditOption.removeBlocks) {
+      const blockIds = req.body.blockIds as string[];
+
+      doc.content = doc.content.filter(
+        (block) => !blockIds.includes(block.blockId)
+      );
+      doc.translationContent = doc.translationContent.filter(
+        (block) => !blockIds.includes(block.blockId)
+      );
+
+      await doc.save();
+    }
+
+    res.status(400).json({
+      status: "failure",
+      message: `Invalid edit option. Valid options are: ${Object.keys(
+        EditOption
+      )}`,
+    });
   } catch (error) {
     next(error);
   }

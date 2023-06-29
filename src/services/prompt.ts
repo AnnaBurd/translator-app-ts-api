@@ -1,7 +1,7 @@
 import { Block, Language } from "../models/Doc.js";
 
 import { ChatCompletionRequestMessageRoleEnum as APIRole } from "openai";
-import { APIMessage, TranslationOption } from "./translation.js";
+import { APIMessage, EditOption } from "./translation.js";
 
 const modelSystemRoles = {
   geologyExpert: "You have an Ph.D in petroleum geology",
@@ -38,7 +38,7 @@ export const generatePrompt = (
   options?: {
     originalLanguage?: Language;
     targetLanguage?: Language;
-    type?: TranslationOption;
+    type?: EditOption;
   }
 ) => {
   const newMessages: Array<APIMessage> = [];

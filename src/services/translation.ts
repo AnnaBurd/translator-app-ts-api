@@ -20,9 +20,10 @@ export interface APIMessage {
   attachToPrompt?: boolean;
 }
 
-export enum TranslationOption {
+export enum EditOption {
   newOriginalBlock = "newOriginalBlock",
   editOriginalBlock = "editOriginalBlock",
+  removeBlocks = "removeBlocks",
 }
 
 // Imitate api requests for tests
@@ -105,7 +106,7 @@ export const translateBlockContent = async (
   options?: {
     originalLanguage?: Language;
     targetLanguage?: Language;
-    type?: TranslationOption;
+    type?: EditOption;
   }
 ): Promise<[TranslationBlock, Array<APIMessage>]> => {
   console.log("Got block to translate: ", block, options);
