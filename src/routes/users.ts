@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { protectRoute, restrictRouteTo } from "../middlewares/auth";
-import { Role } from "../models/User";
-import { getAllUsersStats, getUserProfile } from "../controllers/user";
-import { signup, signin, signout } from "../controllers/auth";
+import { protectRoute, restrictRouteTo } from "../middlewares/auth.js";
+import { Role } from "../models/User.js";
+import { getAllUsersStats, getUserProfile } from "../controllers/user.js";
+import { signup, signin, signout } from "../controllers/auth.js";
 
 const router = Router();
 

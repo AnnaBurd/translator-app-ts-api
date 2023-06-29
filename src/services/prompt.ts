@@ -1,7 +1,7 @@
-import { Block, Language } from "../models/Doc";
+import { Block, Language } from "../models/Doc.js";
 
 import { ChatCompletionRequestMessageRoleEnum as APIRole } from "openai";
-import { APIMessage, TranslationOption } from "./translation";
+import { APIMessage, TranslationOption } from "./translation.js";
 
 const modelSystemRoles = {
   geologyExpert: "You have an Ph.D in petroleum geology",

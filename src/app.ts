@@ -3,12 +3,12 @@ import express, { Request, Response, json } from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
-import { AppError, errorHandler } from "./middlewares/errorHandler";
-import httpLogger from "./utils/http-logger";
+import { AppError, errorHandler } from "./middlewares/errorHandler.js";
+import httpLogger from "./utils/http-logger.js";
 
-import userRoutes from "./routes/users";
-import refreshAccessRoute from "./routes/refresh";
-import docRoutes from "./routes/docs";
+import userRoutes from "./routes/users.js";
+import refreshAccessRoute from "./routes/refresh.js";
+import docRoutes from "./routes/docs.js";
 
 const app = express();
 

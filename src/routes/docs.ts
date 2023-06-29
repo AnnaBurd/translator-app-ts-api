@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { protectRoute } from "../middlewares/auth";
+import { protectRoute } from "../middlewares/auth.js";
 import {
   createNewDocument,
   readUserDocument,
   getUserDocuments,
   deleteUserDocument,
   editUserDocument,
-} from "../controllers/doc";
+} from "../controllers/doc.js";
 
 const router = Router();
 

@@ -4,10 +4,10 @@ import {
   issueAccessTokenById,
   issueJWTTokens,
   verifyRefreshToken,
-} from "../middlewares/authTokenHandler";
-import logger from "../utils/logger";
-import User from "../models/User";
-import RefreshToken from "../models/RefreshToken";
+} from "../middlewares/authTokenHandler.js";
+import logger from "../utils/logger.js";
+import User from "../models/User.js";
+import RefreshToken from "../models/RefreshToken.js";
 
 /* Explanation Notes:
 Authentication is based on usage of refresh and access jwt tokens:

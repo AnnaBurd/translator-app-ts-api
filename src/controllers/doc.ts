@@ -1,11 +1,11 @@
 import e, { RequestHandler } from "express";
-import Doc, { Block } from "../models/Doc";
+import Doc, { Block } from "../models/Doc.js";
 import {
   TranslationOption,
   translateBlockContent,
-} from "../services/translation";
+} from "../services/translation.js";
 
-import logger from "../utils/logger";
+import logger from "../utils/logger.js";
 
 export const createNewDocument: RequestHandler = async (req, res, next) => {
   try {

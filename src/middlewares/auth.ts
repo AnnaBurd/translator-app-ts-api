@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
-import User, { IUser, Role } from "../models/User";
-import { verifyAccessToken } from "./authTokenHandler";
-import logger from "../utils/logger";
+import User, { IUser, Role } from "../models/User.js";
+import { verifyAccessToken } from "./authTokenHandler.js";
+import logger from "../utils/logger.js";
 
 // TODO: change password / forgot password / confirm email
 

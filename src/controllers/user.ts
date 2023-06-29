@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 
-import logger from "../utils/logger";
-import User from "../models/User";
+import logger from "../utils/logger.js";
+import User from "../models/User.js";
 
 export const getUserProfile: RequestHandler = async (req, res, next) => {
   logger.verbose(`Getting user info for user with id: ${req.currentUserId}`);

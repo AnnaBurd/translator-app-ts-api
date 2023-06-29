@@ -2,7 +2,7 @@ import { Request } from "express";
 
 import jwt, { JwtPayload } from "jsonwebtoken";
 
-import { IUser } from "../models/User";
+import { IUser } from "../models/User.js";
 import { HydratedDocument } from "mongoose";
 
 interface UserInfoPayload extends JwtPayload {

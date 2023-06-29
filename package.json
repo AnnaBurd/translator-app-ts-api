@@ -1,11 +1,13 @@
 {
   "name": "translator-app-api",
   "version": "1.0.0",
-  "main": "server.ts",
+  "type": "module",
+  "main": "./src/server.ts",
+  "index": "./src/server.ts",
   "scripts": {
     "start": "npm run build && node build/server.js",
     "build": "rimraf ./build && tsc",
-    "dev": "npx nodemon",
+    "dev": "npx tsx watch src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -19,13 +21,12 @@
     "@types/jsonwebtoken": "^9.0.2",
     "@types/morgan": "^1.9.4",
     "@types/node": "^20.1.5",
-    "nodemon": "^2.0.22",
     "rimraf": "^5.0.0",
-    "ts-node": "^10.9.1",
+    "tsx": "^3.12.7",
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "bcrypt": "^5.1.0",
+    "bcrypt": "^5.0.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
@@ -34,6 +35,7 @@
     "mongoose": "^7.1.1",
     "morgan": "^1.10.0",
     "openai": "^3.2.1",
+    "p-queue": "^7.3.4",
     "winston": "^3.8.2"
   }
 }

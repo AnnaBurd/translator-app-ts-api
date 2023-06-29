@@ -3,8 +3,8 @@ dotenv.config(); // Load variables from .env file to the node environment
 
 import { connect } from "mongoose";
 
-import app from "./app";
-import logger from "./utils/logger";
+import app from "./app.js";
+import logger from "./utils/logger.js";
 
 try {
   // Establish database connection

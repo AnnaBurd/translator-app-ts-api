@@ -1,7 +1,7 @@
 import { Schema, model } from "mongoose";
-import { TranslationBlock } from "./Translation";
-import { APIMessage } from "../services/translation";
-import { IUser } from "./User";
+import { TranslationBlock } from "./Translation.js";
+import { APIMessage } from "../services/translation.js";
+import { IUser } from "./User.js";
 
 export enum Language {
   Ru = "ru",

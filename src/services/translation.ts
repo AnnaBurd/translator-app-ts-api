@@ -3,13 +3,13 @@ import {
   OpenAIApi,
   ChatCompletionRequestMessageRoleEnum as APIRole,
 } from "openai";
-import logger from "../utils/logger";
-import { Block, Language } from "../models/Doc";
-import { TranslationBlock } from "../models/Translation";
-import { generatePrompt } from "./prompt";
-import { modelSettings } from "./translation.config";
-import { type } from "os";
-import e from "express";
+import logger from "../utils/logger.js";
+import { Block, Language } from "../models/Doc.js";
+import { TranslationBlock } from "../models/Translation.js";
+import { generatePrompt } from "./prompt.js";
+import { modelSettings } from "./translation.config.js";
+
+import queue from "./queue.js";
 
 export interface APIMessage {
   role: APIRole;
@@ -61,9 +61,13 @@ const fetchAPIResponse = async (prompt: Array<APIMessage>): Promise<string> => {
       throw new Error("No completion");
 
     console.log("OPEN AI ", response);
+
+    // TODO: handle token usage statistics
     // logger.log("Recieved API RESPONSE" + response.data.choices[0].message);
 
     const translatedText = response.data.choices[0].message!.content;
+
+    if (!translatedText) throw new Error("No completion");
     return translatedText;
   } catch (error) {
     console.log(error);
@@ -86,7 +90,11 @@ export const translateBlockContent = async (
   const [prompt, newMessages] = generatePrompt(block, history, options);
 
   // const translatedText = await fetchAPIResponseFake(prompt);
-  const translatedText = await fetchAPIResponse(prompt);
+  // const translatedText = await fetchAPIResponse(prompt);
+
+  const translatedText = await queue.add(() => fetchAPIResponseFake(prompt));
+  if (!translatedText)
+    throw new Error("Queue of api requests did not return translation text");
 
   const translatedBlock: TranslationBlock = { ...block, text: translatedText };
 
