@@ -28,7 +28,7 @@ export const issueAccessTokenById = (userid: string) => {
     { userid },
     process.env.ACCESS_TOKEN_TOP_SECRET as string,
     {
-      expiresIn: "30s", // TODO: in prod:  set 5-15 minutes
+      expiresIn: 1000 * 60 * 5, // TODO: in prod:  set 5-15 minutes
     }
   );
 

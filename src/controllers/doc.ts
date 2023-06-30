@@ -143,13 +143,20 @@ export const editUserDocument: RequestHandler = async (req, res, next) => {
 
       if (editOption !== EditOption.newOriginalBlock) {
         doc.messagesHistory.forEach((message) => {
-          if (message.relevantBlockId === inputBlock.blockId) {
+          if (
+            message.attachToPrompt &&
+            message.relevantBlockId === inputBlock.blockId
+          ) {
             message.attachToPrompt = false;
           }
         });
       }
 
       doc.messagesHistory.push(...newMessages);
+
+      doc.tokensUsed += newMessages.reduce((sum, msg) => {
+        return msg.tokens ? sum + msg.tokens : sum;
+      }, 0);
 
       await doc?.save();
 

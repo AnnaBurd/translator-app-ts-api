@@ -2,6 +2,8 @@ import {
   Configuration,
   OpenAIApi,
   ChatCompletionRequestMessageRoleEnum as APIRole,
+  CreateChatCompletionResponse,
+  CreateCompletionResponseUsage,
 } from "openai";
 import logger from "../utils/logger.js";
 import { Block, Language } from "../models/Doc.js";
@@ -18,6 +20,8 @@ export interface APIMessage {
   content: string;
   relevantBlockId?: string;
   attachToPrompt?: boolean;
+  tokens?: number;
+  timestamp?: Date;
 }
 
 export enum EditOption {
@@ -50,7 +54,9 @@ const fetchAPIResponseFake = async (
 // Handle requests to OPEN AI API
 const openai = new OpenAIApi(new Configuration({ apiKey: AI_KEY }));
 
-const fetchAPIResponse = async (prompt: Array<APIMessage>): Promise<string> => {
+const fetchAPIResponse = async (
+  prompt: Array<APIMessage>
+): Promise<[string, CreateCompletionResponseUsage]> => {
   let response;
   try {
     response = await openai.createChatCompletion({
@@ -97,7 +103,15 @@ const fetchAPIResponse = async (prompt: Array<APIMessage>): Promise<string> => {
 
   if (!completion)
     throw new AppError(AppErrorName.ApiError, "No completion from OPEN AI API");
-  return completion;
+
+  if (!usage) {
+    logger.error(`No usage statistics from OPEN AI API: ${completion}`);
+  }
+
+  return [
+    completion,
+    usage || { total_tokens: 0, completion_tokens: 0, prompt_tokens: 0 },
+  ];
 };
 
 export const translateBlockContent = async (
@@ -115,21 +129,28 @@ export const translateBlockContent = async (
 
   // const translatedText = await queue.add(() => fetchAPIResponseFake(prompt));
   // const translatedText = await fetchAPIResponse(prompt);
-  const translatedText = await queue.add(() => fetchAPIResponse(prompt));
+  // const res = await queue.add(() =>
+  //   fetchAPIResponse(prompt)
+  // );
+  const apiResponse = await queue.add(() => fetchAPIResponse(prompt));
 
-  if (!translatedText)
+  if (!apiResponse)
     throw new AppError(
       AppErrorName.ApiError,
       "Did not recieve translation text from API"
     );
 
+  const [translatedText, usage] = apiResponse;
+
   const translatedBlock: TranslationBlock = { ...block, text: translatedText };
 
+  newMessages[newMessages.length - 1].tokens = usage.prompt_tokens;
   newMessages.push({
     role: APIRole.Assistant,
     content: translatedText,
     attachToPrompt: false,
     relevantBlockId: block.blockId,
+    tokens: usage.completion_tokens,
   });
 
   return [translatedBlock, newMessages];

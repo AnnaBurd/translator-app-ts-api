@@ -24,6 +24,7 @@ export interface IDoc {
   content: Array<Block>;
   translationContent: Array<TranslationBlock>;
   messagesHistory: Array<APIMessage>;
+  tokensUsed: number;
   createdAt: Date;
   changedAt: Date;
 }
@@ -72,8 +73,11 @@ const schema = new Schema<IDoc>({
       content: String,
       relevantBlockId: String,
       attachToPrompt: Boolean,
+      tokens: { type: Number, default: 0 },
+      timestamp: { type: Date, default: Date.now() },
     },
   ],
+  tokensUsed: { type: Number, default: 0 },
   createdAt: {
     type: Date,
     default: Date.now(),
