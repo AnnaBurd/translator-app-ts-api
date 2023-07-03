@@ -50,17 +50,59 @@ const getUserUsageStatistics = async (userId: string) => {
     0
   );
 
-  const tokensPerMonthForCurrentYear = new Array(12).fill(0);
+  const currDate = new Date();
+  const baseMonth = new Date(currDate.getFullYear(), currDate.getMonth(), 1);
+  baseMonth.setMonth(baseMonth.getMonth() - 4);
+  const lastSixMonths = Array.from(
+    { length: 6 },
+    (_, i) => new Date(baseMonth.getFullYear(), baseMonth.getMonth() + i, 1)
+  );
+
+  console.log("LAST SIX M", lastSixMonths);
+
+  const tokensUsageStats = new Array(6).fill(0);
+  const wordsUsageStats = new Array(6).fill(0);
+  const docsUsageStats = new Array(6).fill(0);
+
   userDocuments.forEach((doc) => {
+    if (doc.createdAt && doc.createdAt >= baseMonth)
+      docsUsageStats[(doc.createdAt.getMonth() + 4) % 6] += 1;
+
+    // console.log("doc.createdAt", docsUsageStats);
+
     doc.messagesHistory.forEach((message) => {
-      if (message.timestamp?.getFullYear() === new Date().getFullYear()) {
+      console.log(message);
+      if (message.timestamp && message.timestamp > baseMonth) {
         const month = message.timestamp?.getMonth();
         const tokens = message.tokens;
+        const words = message.content.match(/([^\s]+)/g);
 
-        if (month && tokens) tokensPerMonthForCurrentYear[month!] += tokens;
+        // console.log("month", month);
+        // console.log("tokens", tokens);
+        // console.log("words", words);
+        if (month && tokens) tokensUsageStats[(month! + 4) % 6] += tokens;
+        if (month && words) wordsUsageStats[(month! + 4) % 6] += words.length;
       }
     });
   });
+
+  // const currDate = new Date();
+  // const baseMonth = new Date(currDate.getFullYear(), currDate.getMonth(), 1);
+  // baseMonth.setMonth(baseMonth.getMonth() - 4);
+  // const sortedMonths = [...months.splice(baseMonth.getMonth()), ...months];
+  // const labels = sortedMonths.slice(0, 6);
+
+  // const tokensPerMonthForCurrentYear = new Array(12).fill(0);
+  // userDocuments.forEach((doc) => {
+  //   doc.messagesHistory.forEach((message) => {
+  //     if (message.timestamp?.getFullYear() === new Date().getFullYear()) {
+  //       const month = message.timestamp?.getMonth();
+  //       const tokens = message.tokens;
+
+  //       if (month && tokens) tokensPerMonthForCurrentYear[month!] += tokens;
+  //     }
+  //   });
+  // });
 
   return {
     numberOfDocuments,
@@ -68,7 +110,10 @@ const getUserUsageStatistics = async (userId: string) => {
     numOfParagraphsTranslatedThisMonth,
     numberOfWordsTranslatedThisMonth,
     totalTokens,
-    tokensPerMonthForCurrentYear,
+    tokensUsageStats,
+    wordsUsageStats,
+    docsUsageStats,
+    lastSixMonths,
   };
 };
 
