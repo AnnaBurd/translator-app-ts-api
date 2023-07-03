@@ -33,7 +33,10 @@ export const getUserDocuments: RequestHandler = async (req, res, next) => {
     // TODO: filter
     // TODO: filter only relevant data
     // TODO: pagination
-    const userDocuments = await Doc.find({ owner: req.currentUserId });
+    const userDocuments = await Doc.find({
+      owner: req.currentUserId,
+      deleted: { $ne: true },
+    });
 
     // Generate output including doc text preview strings
     const data = userDocuments.map((doc) => {
@@ -60,7 +63,7 @@ export const getUserDocuments: RequestHandler = async (req, res, next) => {
 const getUserDocument = async (ownerId: string, docId: string) => {
   // Fetch document from database and make dure that requested document belongs to user
   const doc = await Doc.findById(docId);
-  if (!doc || !(doc.owner.toString() === ownerId))
+  if (!doc || !(doc.owner.toString() === ownerId) || doc.deleted)
     throw new Error(
       "Could not get a document, it could have been already deleted"
     );
@@ -196,7 +199,8 @@ export const deleteUserDocument: RequestHandler = async (req, res, next) => {
     const ownerId = req.currentUserId!;
     const docId = req.params.docId;
 
-    await Doc.deleteOne({ _id: docId, owner: ownerId });
+    // await Doc.deleteOne({ _id: docId, owner: ownerId });
+    await Doc.findByIdAndUpdate(docId, { deleted: true });
 
     res.status(204).json({ status: "success", data: "deleted" });
   } catch (error) {

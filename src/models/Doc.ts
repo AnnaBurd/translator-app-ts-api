@@ -27,6 +27,7 @@ export interface IDoc {
   tokensUsed: number;
   createdAt: Date;
   changedAt: Date;
+  deleted: boolean;
 }
 
 // docs: [{ type: Schema.Types.ObjectId, ref: "Doc" }],
@@ -85,6 +86,7 @@ const schema = new Schema<IDoc>({
   changedAt: {
     type: Date,
   },
+  deleted: Boolean,
 });
 
 // Update changed at timestamp on document save
