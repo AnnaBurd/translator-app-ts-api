@@ -33,7 +33,7 @@ export enum EditOption {
 // Imitate api requests for tests
 const fetchAPIResponseFake = async (
   prompt: Array<APIMessage>
-): Promise<string> => {
+): Promise<[string, CreateCompletionResponseUsage]> => {
   try {
     await new Promise((resolve) => {
       setTimeout(() => {
@@ -41,9 +41,10 @@ const fetchAPIResponseFake = async (
       }, 1000);
     });
 
-    return `Dummy translation: ${
-      prompt[prompt.length - 1].content.split(":")[1]
-    }`;
+    return [
+      `Dummy translation: ${prompt[prompt.length - 1].content.split(":")[1]}`,
+      { total_tokens: 10, completion_tokens: 5, prompt_tokens: 5 },
+    ];
   } catch (error) {
     console.log(error);
     logger.error(`Could not fetch data from API: ${error}`);
@@ -132,7 +133,8 @@ export const translateBlockContent = async (
   // const res = await queue.add(() =>
   //   fetchAPIResponse(prompt)
   // );
-  const apiResponse = await queue.add(() => fetchAPIResponse(prompt));
+  const apiResponse = await queue.add(() => fetchAPIResponseFake(prompt));
+  // const apiResponse = await queue.add(() => fetchAPIResponse(prompt));
 
   if (!apiResponse)
     throw new AppError(

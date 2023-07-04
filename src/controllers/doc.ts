@@ -43,6 +43,7 @@ export const getUserDocuments: RequestHandler = async (req, res, next) => {
       return {
         _id: doc._id,
         title: doc.title,
+        slug: doc.slug,
         lang: doc.lang,
         translationLang: doc.translationLang,
         changedAt: doc.changedAt,
@@ -60,10 +61,18 @@ export const getUserDocuments: RequestHandler = async (req, res, next) => {
   }
 };
 
-const getUserDocument = async (ownerId: string, docId: string) => {
+const getUserDocument = async (ownerId: string, docSlug: string) => {
   // Fetch document from database and make dure that requested document belongs to user
-  const doc = await Doc.findById(docId);
-  if (!doc || !(doc.owner.toString() === ownerId) || doc.deleted)
+  // const doc = await Doc.findById(docId);
+
+  const doc = await Doc.findOne({
+    slug: docSlug,
+    deleted: { $ne: true },
+    owner: ownerId,
+  });
+
+  console.log("getUserDocument", ownerId, docSlug, doc);
+  if (!doc)
     throw new Error(
       "Could not get a document, it could have been already deleted"
     );
@@ -73,7 +82,7 @@ const getUserDocument = async (ownerId: string, docId: string) => {
 
 export const readUserDocument: RequestHandler = async (req, res, next) => {
   try {
-    const doc = await getUserDocument(req.currentUserId!, req.params.docId);
+    const doc = await getUserDocument(req.currentUserId!, req.params.docSlug);
 
     res.status(200).json({ status: "success", data: doc });
   } catch (error) {
@@ -84,7 +93,7 @@ export const readUserDocument: RequestHandler = async (req, res, next) => {
 export const editUserDocument: RequestHandler = async (req, res, next) => {
   try {
     // Get requested document from the database
-    const doc = await getUserDocument(req.currentUserId!, req.params.docId);
+    const doc = await getUserDocument(req.currentUserId!, req.params.docSlug);
 
     console.log(
       " ✍🏻✍🏻✍🏻editUserDocument",

@@ -58,7 +58,7 @@ const getUserUsageStatistics = async (userId: string) => {
     (_, i) => new Date(baseMonth.getFullYear(), baseMonth.getMonth() + i, 1)
   );
 
-  console.log("LAST SIX M", lastSixMonths);
+  // console.log("LAST SIX M", lastSixMonths);
 
   const tokensUsageStats = new Array(6).fill(0);
   const wordsUsageStats = new Array(6).fill(0);
@@ -71,7 +71,7 @@ const getUserUsageStatistics = async (userId: string) => {
     // console.log("doc.createdAt", docsUsageStats);
 
     doc.messagesHistory.forEach((message) => {
-      console.log(message);
+      // console.log(message);
       if (message.timestamp && message.timestamp > baseMonth) {
         const month = message.timestamp?.getMonth();
         const tokens = message.tokens;
@@ -127,7 +127,7 @@ export const getUserProfile: RequestHandler = async (req, res, next) => {
     if (!currentUser)
       throw new AppError(AppErrorName.AuthenticationError, "User not found");
 
-    console.log("getting user profile with statistics");
+    // console.log("getting user profile with statistics");
 
     const usageStatistics = await getUserUsageStatistics(req.currentUserId!);
 

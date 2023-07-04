@@ -15,7 +15,7 @@ router.use(protectRoute);
 
 router.route("/").get(getUserDocuments).post(createNewDocument);
 router
-  .route("/:docId")
+  .route("/:docSlug")
   .get(readUserDocument)
   .patch(editUserDocument)
   .delete(deleteUserDocument);
