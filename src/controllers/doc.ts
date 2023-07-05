@@ -33,7 +33,25 @@ export const getUserDocuments: RequestHandler = async (req, res, next) => {
     // TODO: filter
     // TODO: filter only relevant data
     // TODO: pagination
+
+    const { page, limit } = req.query;
+
+    // Make sure that page and limit are valid numbers
+    const requestedPageNumber = parseInt(page as string) || 1;
+    const itemsPerPage = parseInt(limit as string) || 10;
+    if (requestedPageNumber < 1 || itemsPerPage < 1)
+      throw new Error("Invalid page or limit value");
+
+    console.log("getUserDocuments", page, limit, req.query);
+
     const userDocuments = await Doc.find({
+      owner: req.currentUserId,
+      deleted: { $ne: true },
+    })
+      .limit(itemsPerPage)
+      .skip((requestedPageNumber - 1) * itemsPerPage);
+
+    const count = await Doc.countDocuments({
       owner: req.currentUserId,
       deleted: { $ne: true },
     });
@@ -52,7 +70,12 @@ export const getUserDocuments: RequestHandler = async (req, res, next) => {
       };
     });
 
-    res.status(200).json({ status: "success", data });
+    res.status(200).json({
+      status: "success",
+      data,
+      currentPage: page,
+      totalPages: Math.ceil(count / itemsPerPage),
+    });
   } catch (error) {
     logger.error(
       `🔥 Could not get user's documents. (${(error as Error).message}`
@@ -71,7 +94,7 @@ const getUserDocument = async (ownerId: string, docSlug: string) => {
     owner: ownerId,
   });
 
-  console.log("getUserDocument", ownerId, docSlug, doc);
+  // console.log("getUserDocument", ownerId, docSlug, doc);
   if (!doc)
     throw new Error(
       "Could not get a document, it could have been already deleted"
@@ -206,10 +229,13 @@ export const editUserDocument: RequestHandler = async (req, res, next) => {
 export const deleteUserDocument: RequestHandler = async (req, res, next) => {
   try {
     const ownerId = req.currentUserId!;
-    const docId = req.params.docId;
+    const docSlug = req.params.docSlug;
 
     // await Doc.deleteOne({ _id: docId, owner: ownerId });
-    await Doc.findByIdAndUpdate(docId, { deleted: true });
+    await Doc.findOneAndUpdate(
+      { slug: docSlug, owner: ownerId },
+      { deleted: true }
+    );
 
     res.status(204).json({ status: "success", data: "deleted" });
   } catch (error) {
