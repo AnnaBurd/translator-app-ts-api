@@ -1,8 +1,13 @@
 import e, { RequestHandler } from "express";
 import Doc, { Block } from "../models/Doc.js";
-import { EditOption, translateBlockContent } from "../services/translation.js";
+import {
+  EditOption,
+  translateBlockContent,
+} from "../services/translation/translation.js";
 
 import logger from "../utils/logger.js";
+import User from "../models/User.js";
+import { AppError, AppErrorName } from "../middlewares/errorHandler.js";
 
 export const createNewDocument: RequestHandler = async (req, res, next) => {
   try {
@@ -152,6 +157,15 @@ export const editUserDocument: RequestHandler = async (req, res, next) => {
 
       if (inputBlockIndex === -1) throw new Error("Block not found");
 
+      // Make sure tokens usage is withing limits
+      const owner = await User.findById(doc.owner);
+      if (!owner) throw new Error("User was already deleted");
+      if (owner.tokensUsedMonth >= owner.tokensLimit)
+        throw new AppError(
+          AppErrorName.RunOutOfTokens,
+          "Run out of tokens for this month."
+        );
+
       // Update translation after original text was changed
       const [translatedBlock, newMessages] = await translateBlockContent(
         inputBlock,
@@ -189,9 +203,20 @@ export const editUserDocument: RequestHandler = async (req, res, next) => {
 
       doc.messagesHistory.push(...newMessages);
 
-      doc.tokensUsed += newMessages.reduce((sum, msg) => {
+      const tokensUsed = newMessages.reduce((sum, msg) => {
         return msg.tokens ? sum + msg.tokens : sum;
       }, 0);
+      doc.tokensUsed += tokensUsed;
+
+      // TODO: updating tokens usage on user acc each time and query user acc each time?
+      // Update token usage balance on user's account:
+      owner.tokensUsedMonth += tokensUsed;
+      owner.tokensUsedTotal += tokensUsed;
+
+      if (owner.tokensUsedMonth > owner.tokensLimit)
+        owner.tokensUsedMonth = owner.tokensLimit;
+
+      await owner.save();
 
       await doc?.save();
 

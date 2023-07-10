@@ -45,10 +45,16 @@ const getUserUsageStatistics = async (userId: string) => {
     0
   );
 
-  const totalTokens = userDocuments.reduce(
-    (sumOfTokens, currDoc) => sumOfTokens + currDoc.tokensUsed,
-    0
-  );
+  const user = await User.findById(userId);
+  if (!user) throw new Error("User not found");
+  const tokensUsedTotal = user.tokensUsedTotal;
+  const tokensUsedMonth = user.tokensUsedMonth;
+  const limit = user.tokensLimit;
+
+  // const totalTokens = userDocuments.reduce(
+  //   (sumOfTokens, currDoc) => sumOfTokens + currDoc.tokensUsed,
+  //   0
+  // );
 
   const currDate = new Date();
   const baseMonth = new Date(currDate.getFullYear(), currDate.getMonth(), 1);
@@ -109,11 +115,13 @@ const getUserUsageStatistics = async (userId: string) => {
     lastEditionAt,
     numOfParagraphsTranslatedThisMonth,
     numberOfWordsTranslatedThisMonth,
-    totalTokens,
+    totalTokens: tokensUsedTotal,
+    tokensUsedMonth,
     tokensUsageStats,
     wordsUsageStats,
     docsUsageStats,
     lastSixMonths,
+    limit,
   };
 };
 

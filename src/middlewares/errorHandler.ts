@@ -9,6 +9,7 @@ export enum AppErrorName {
   TokenExpiredError = "TokenExpiredError",
   ApiError = "ApiError",
   ResourceNotFoundError = "ResourceNotFoundError",
+  RunOutOfTokens = "RunOutOfTokens",
 }
 
 export class AppError extends Error {
@@ -33,6 +34,10 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
       return res
         .status(400)
         .json({ error: err, errMessage: "Could not fetch translation" });
+    case AppErrorName.ValidationError:
+      return res.status(400).json({ error: err, errMessage: err.message });
+    case AppErrorName.RunOutOfTokens:
+      return res.status(402).json({ error: err, errMessage: err.message });
     default:
       return res.status(500).json({ error: err, errMessage: err.message });
   }

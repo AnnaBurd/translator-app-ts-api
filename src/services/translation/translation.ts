@@ -5,15 +5,16 @@ import {
   CreateChatCompletionResponse,
   CreateCompletionResponseUsage,
 } from "openai";
-import logger from "../utils/logger.js";
-import { Block, Language } from "../models/Doc.js";
-import { TranslationBlock } from "../models/Translation.js";
+import logger from "../../utils/logger.js";
+import { Block, Language } from "../../models/Doc.js";
+import { TranslationBlock } from "../../models/Translation.js";
 import { generatePrompt } from "./prompt.js";
 import { modelSettings } from "./translation.config.js";
 
 import queue from "./queue.js";
-import { AppError, AppErrorName } from "../middlewares/errorHandler.js";
-import { AI_KEY } from "../config.js";
+import { AppError, AppErrorName } from "../../middlewares/errorHandler.js";
+import { AI_KEY } from "../../config.js";
+import { Api } from "chromadb/dist/main/generated/models.js";
 
 export interface APIMessage {
   role: APIRole;
@@ -65,8 +66,12 @@ const fetchAPIResponse = async (
       messages: prompt,
     });
   } catch (error) {
-    if ((error as Error)?.message?.includes("429")) {
-      console.log("TRYING AGAIN 429 AFTER DELAY");
+    if (
+      (error as Error)?.message?.includes("429") ||
+      (error as Error)?.message?.includes("503") ||
+      (error as Error)?.message?.includes("400")
+    ) {
+      console.log("TRYING AGAIN 429|503|400 AFTER DELAY");
 
       await new Promise((resolve) => {
         setTimeout(() => {
@@ -80,7 +85,8 @@ const fetchAPIResponse = async (
       });
     } else {
       // all other errors
-      throw error;
+      console.log("🌋 Error fetching data from Open AI API: ", error);
+      throw new AppError(AppErrorName.ApiError, "Open AI API refused request");
     }
   }
 
@@ -124,17 +130,17 @@ export const translateBlockContent = async (
     type?: EditOption;
   }
 ): Promise<[TranslationBlock, Array<APIMessage>]> => {
-  console.log("Got block to translate: ", block, options);
+  if (block.text.length > 2500) {
+    throw new AppError(
+      AppErrorName.ValidationError,
+      "Text too long for translation"
+    );
+  }
 
-  const [prompt, newMessages] = generatePrompt(block, history, options);
+  const [prompt, newMessages] = await generatePrompt(block, history, options);
 
-  // const translatedText = await queue.add(() => fetchAPIResponseFake(prompt));
-  // const translatedText = await fetchAPIResponse(prompt);
-  // const res = await queue.add(() =>
-  //   fetchAPIResponse(prompt)
-  // );
-  const apiResponse = await queue.add(() => fetchAPIResponseFake(prompt));
-  // const apiResponse = await queue.add(() => fetchAPIResponse(prompt));
+  // const apiResponse = await queue.add(() => fetchAPIResponseFake(prompt));
+  const apiResponse = await queue.add(() => fetchAPIResponse(prompt));
 
   if (!apiResponse)
     throw new AppError(

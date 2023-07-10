@@ -1,9 +1,9 @@
+import { PORT, DATABASE_URL } from "./config.js";
+
 import { connect } from "mongoose";
 
 import app from "./app.js";
 import logger from "./utils/logger.js";
-
-import { PORT, DATABASE_URL } from "./config.js";
 
 try {
   // Establish database connection

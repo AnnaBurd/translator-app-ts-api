@@ -1,6 +1,18 @@
 import { Model, Schema, model } from "mongoose";
 import bcrypt from "bcrypt";
 
+/* Note: 
+To correctly calculate monthly tokens usage per user, the values are reset to 0 on the first day of each month.
+
+This is done by a MongoDB trigger function: 
+exports = function() {
+  const collection = context.services.get("Cluster0").db("translator").collection("users");
+  collection.updateMany({}, {$set: {tokensUsedMonth: 0}})
+};
+
+For correct work of the trigger function, the cluster should be "Linked Data Source" - there is a "Link" button in the Add Trigger window.
+*/
+
 export enum Role {
   User = "User",
   Admin = "Admin",
@@ -12,6 +24,9 @@ export interface IUser {
   email: string;
   password?: string;
   role?: Role;
+  tokensLimit: number;
+  tokensUsedMonth: number;
+  tokensUsedTotal: number;
 }
 
 export interface IUserMethods {
@@ -32,6 +47,9 @@ const schema = new Schema<IUser, UserModel, IUserMethods>({
   },
   password: { type: String, required: true },
   role: { type: String, default: Role.User },
+  tokensLimit: { type: Number, default: 0 },
+  tokensUsedMonth: { type: Number, default: 0 },
+  tokensUsedTotal: { type: Number, default: 0 },
 });
 
 schema.index({ email: 1 });

@@ -1,6 +1,6 @@
 import { Schema, model } from "mongoose";
 import { TranslationBlock } from "./Translation.js";
-import { APIMessage } from "../services/translation.js";
+import { APIMessage } from "../services/translation/translation.js";
 import { IUser } from "./User.js";
 import slugify from "../utils/slugify.js";
 import makeid from "../utils/makeid.js";
@@ -99,12 +99,12 @@ schema.pre("save", async function (next) {
 
 // Generate unique slugs for new docs
 schema.pre("save", async function (next) {
-  console.log("Pre save doc", this);
+  // console.log("Pre save doc", this);
   if (this.slug) return next(); // Slug is already created
 
   // New document without slug:
 
-  console.log("Generating slug for new document...");
+  // console.log("Generating slug for new document...");
 
   const generatedSlug = slugify(this.title, {
     lower: true,

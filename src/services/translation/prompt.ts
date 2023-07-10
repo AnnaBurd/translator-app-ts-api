@@ -1,7 +1,8 @@
-import { Block, Language } from "../models/Doc.js";
+import { Block, Language } from "../../models/Doc.js";
 
 import { ChatCompletionRequestMessageRoleEnum as APIRole } from "openai";
 import { APIMessage, EditOption } from "./translation.js";
+import { getPromptExamples } from "./example-pairs-store/store.js";
 
 const modelSystemRoles = {
   geologyExpert: "You have an Ph.D in petroleum geology",
@@ -13,26 +14,9 @@ const languages = {
   en: "English",
 };
 
-const modelPromptTemplates = {
-  geologyExpert: {
-    translate: {
-      ru: {
-        vn: "Переведи текст отчета по геологии с русского языка на вьетнамский:",
-        en: "Переведи текст отчета по геологии с русского языка на английский:",
-      },
-      en: {
-        vn: "Translate the geology report from English to Vietnamese:",
-        ru: "Translate the geology report from English to Russian:",
-      },
-      vn: {
-        ru: "Переведи текст отчета по геологии с вьетнамского языка на русский:",
-        en: "Переведи текст отчета по геологии с вьетнамского языка на английский:",
-      },
-    },
-  },
-};
+const modelPromptTemplates = {};
 
-export const generatePrompt = (
+export const generatePrompt = async (
   block: Block,
   history?: Array<APIMessage>,
   options?: {
@@ -71,14 +55,33 @@ export const generatePrompt = (
       });
   }
 
+  // TODO: if user input is too long split on blocks
+  const userInput = block.text;
+  const similarTexts = await getPromptExamples(
+    userInput,
+    originalLanguage,
+    translationLanguage,
+    4000 - userInput.length * 2
+  );
+
+  // console.log("similarTexts: ", similarTexts);
+
+  const promptText = `Translate from ${languages[originalLanguage]} to ${
+    languages[translationLanguage]
+  }, make sure to make no grammar or spelling mistakes${
+    similarTexts.length > 0
+      ? `, for example,
+  ${similarTexts.map((pair) => pair[0] + "\n" + pair[1]).join("\n\n")}`
+      : ""
+  }:
+
+${userInput}`;
+
+  console.log("GENERATED Prompt text: ", promptText);
+
   const newPromptMessage = {
     role: APIRole.User,
-    content: `${
-      (modelPromptTemplates.geologyExpert.translate[originalLanguage] as any)[
-        translationLanguage
-      ]
-    }
-  ${block.text}`,
+    content: promptText,
   };
 
   prompt.push(newPromptMessage);
@@ -88,11 +91,11 @@ export const generatePrompt = (
     attachToPrompt: false,
   });
 
-  console.log("Generated prompt: ", prompt);
-  console.log(
-    "And generated new outcoming messages for history: ",
-    newMessages
-  );
+  // console.log("Generated prompt: ", prompt);
+  // console.log(
+  //   "And generated new outcoming messages for history: ",
+  //   newMessages
+  // );
 
   console.log("PROMPT LENGHT: 🎈🔥🎈", JSON.stringify(prompt).length);
 
