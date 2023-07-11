@@ -1,7 +1,11 @@
 import { Router } from "express";
 import { protectRoute, restrictRouteTo } from "../middlewares/auth.js";
 import { Role } from "../models/User.js";
-import { getAllUsersStats, getUserProfile } from "../controllers/user.js";
+import {
+  getAllUsers,
+  getAllUsersStats,
+  getUserProfile,
+} from "../controllers/user.js";
 import { signup, signin, signout } from "../controllers/auth.js";
 
 const router = Router();
@@ -20,7 +24,8 @@ router.route("/profile").get(getUserProfile).patch().delete();
 
 // For admins:
 router.use(restrictRouteTo(Role.Admin));
-router.get("/", getAllUsersStats);
+router.get("/", getAllUsers);
+router.get("/usagestatistics", getAllUsersStats);
 router.patch("/:userid"); // TODO:
 router.delete("/:userid"); // TODO:
 

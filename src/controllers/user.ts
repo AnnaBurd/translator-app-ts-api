@@ -154,14 +154,59 @@ export const getAllUsersStats: RequestHandler = async (req, res, next) => {
   logger.verbose(
     `Getting all users info (required by admin): ${req.currentUser?.email}`
   );
+  try {
+    const activeUsers = await User.find({
+      deleted: { $ne: true },
+      tokensUsedMonth: { $gt: 0 },
+    });
+
+    const tokensUsedMonth = activeUsers.reduce(
+      (total, currUser) => total + currUser.tokensUsedMonth,
+      0
+    );
+
+    console.log(activeUsers);
+
+    res.status(200).json({
+      status: "success",
+      data: { activeUsers: activeUsers.length, tokensUsedMonth },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllUsers: RequestHandler = async (req, res, next) => {
+  logger.verbose(
+    `Getting all users info (required by admin): ${req.currentUser?.email}`
+  );
 
   // TODO: filter user data to output only relevant fields
 
+  const { page, limit } = req.query;
+
+  // Make sure that page and limit are valid numbers
+  const requestedPageNumber = parseInt(page as string) || 1;
+  const itemsPerPage = parseInt(limit as string) || 2;
+  if (requestedPageNumber < 1 || itemsPerPage < 1)
+    throw new Error("Invalid page or limit value");
+
   try {
-    const users = await User.find();
+    const users = await User.find({ deleted: { $ne: true } })
+      .limit(itemsPerPage)
+      .skip((requestedPageNumber - 1) * itemsPerPage);
+
+    const count = await User.countDocuments({
+      deleted: { $ne: true },
+    });
 
     // TODO: paginate results
-    res.status(200).json({ status: "success", data: users });
+    res.status(200).json({
+      status: "success",
+      data: users,
+      currentPage: page,
+      totalPages: Math.ceil(count / itemsPerPage),
+    });
   } catch (error) {
     logger.error(`🔥 Could not get users data (${(error as Error).message})`);
     next(error);

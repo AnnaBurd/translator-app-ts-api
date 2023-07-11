@@ -27,6 +27,8 @@ export interface IUser {
   tokensLimit: number;
   tokensUsedMonth: number;
   tokensUsedTotal: number;
+  registrationDate?: Date;
+  isBlocked?: boolean;
 }
 
 export interface IUserMethods {
@@ -50,6 +52,8 @@ const schema = new Schema<IUser, UserModel, IUserMethods>({
   tokensLimit: { type: Number, default: 0 },
   tokensUsedMonth: { type: Number, default: 0 },
   tokensUsedTotal: { type: Number, default: 0 },
+  registrationDate: { type: Date, default: Date.now() },
+  isBlocked: { type: Boolean },
 });
 
 schema.index({ email: 1 });

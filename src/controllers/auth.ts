@@ -221,6 +221,7 @@ export const silentSignIn: RequestHandler = async (req, res, next) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        role: user.role,
       },
     });
   } catch (error) {
