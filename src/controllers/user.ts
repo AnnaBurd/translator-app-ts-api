@@ -165,11 +165,24 @@ export const getAllUsersStats: RequestHandler = async (req, res, next) => {
       0
     );
 
-    console.log(activeUsers);
+    const blockedUsers = await User.countDocuments({
+      deleted: { $ne: true },
+      isBlocked: true,
+    });
+
+    const inactiveUsers =
+      (await User.countDocuments()) - activeUsers.length - blockedUsers;
+
+    // console.log(activeUsers);
 
     res.status(200).json({
       status: "success",
-      data: { activeUsers: activeUsers.length, tokensUsedMonth },
+      data: {
+        activeUsers: activeUsers.length,
+        tokensUsedMonth,
+        blockedUsers,
+        inactiveUsers,
+      },
     });
   } catch (error) {
     next(error);
@@ -209,6 +222,66 @@ export const getAllUsers: RequestHandler = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(`🔥 Could not get users data (${(error as Error).message})`);
+    next(error);
+  }
+};
+
+export const updateUserAccount: RequestHandler = async (req, res, next) => {
+  const userEmail = req.params.userEmail;
+
+  const { isBlocked, planOption } = req.body;
+
+  console.log("isBlocked", isBlocked);
+  console.log("userEmail", userEmail);
+
+  console.log("planOption", planOption);
+
+  console.log("req.body", req.body);
+
+  // TODO: filter user data to output only relevant fields
+
+  // const { page, limit } = req.query;
+
+  // Make sure that page and limit are valid numbers
+  // const requestedPageNumber = parseInt(page as string) || 1;
+  // const itemsPerPage = parseInt(limit as string) || 2;
+  // if (requestedPageNumber < 1 || itemsPerPage < 1)
+  //   throw new Error("Invalid page or limit value");
+
+  // const updates: { isBlocked?: boolean; tokensLimit?: number } = {};
+  // if (isBlocked !== "undefined") updates["isBlocked"] = isBlocked;
+  // if (planOption !== "undefined") updates["tokensLimit"] = newLimit;
+
+  // console.log("updates", updates);
+
+  try {
+    const user = await User.findOne({ email: userEmail });
+
+    if (!user) throw new Error("User not found");
+
+    if (isBlocked !== undefined) user.isBlocked = isBlocked;
+    if (planOption !== undefined) {
+      const newLimit =
+        planOption === "Enterprise"
+          ? 100000000
+          : planOption === "Premium"
+          ? 10000000
+          : planOption === "Standard"
+          ? 1000000
+          : 0;
+      user.tokensLimit = newLimit;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      status: "success",
+      data: user,
+    });
+  } catch (error) {
+    logger.error(
+      `🔥 Could not update users data (${(error as Error).message})`
+    );
     next(error);
   }
 };

@@ -5,6 +5,7 @@ import {
   getAllUsers,
   getAllUsersStats,
   getUserProfile,
+  updateUserAccount,
 } from "../controllers/user.js";
 import { signup, signin, signout } from "../controllers/auth.js";
 
@@ -26,7 +27,7 @@ router.route("/profile").get(getUserProfile).patch().delete();
 router.use(restrictRouteTo(Role.Admin));
 router.get("/", getAllUsers);
 router.get("/usagestatistics", getAllUsersStats);
-router.patch("/:userid"); // TODO:
+router.patch("/:userEmail", updateUserAccount);
 router.delete("/:userid"); // TODO:
 
 export default router;

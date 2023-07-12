@@ -166,6 +166,8 @@ export const editUserDocument: RequestHandler = async (req, res, next) => {
           "Run out of tokens for this month."
         );
 
+      if (owner.isBlocked) throw new Error("User is blocked");
+
       // Update translation after original text was changed
       const [translatedBlock, newMessages] = await translateBlockContent(
         inputBlock,

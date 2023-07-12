@@ -69,11 +69,11 @@ export const signup: RequestHandler = async (req, res, next) => {
     }).save();
 
     // Imitate long server response
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(console.log("Recieved API RESPONSE"));
-      }, 10000);
-    });
+    // await new Promise((resolve) => {
+    //   setTimeout(() => {
+    //     resolve(console.log("Recieved API RESPONSE"));
+    //   }, 10000);
+    // });
 
     // Send auth tokens to user
     attachRefreshToken(refreshTokenValue, res)
@@ -135,6 +135,7 @@ export const signin: RequestHandler = async (req, res, next) => {
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
+          role: user.role,
         },
         accessToken,
       });
