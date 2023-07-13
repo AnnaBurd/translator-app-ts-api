@@ -8,6 +8,7 @@ import { parahraphPairsPath } from "./loader.js";
 import logger from "../../../utils/logger.js";
 import { Language } from "../../../models/Doc.js";
 import e from "express";
+import { backOff } from "exponential-backoff";
 
 let vectorStore: FaissStore;
 try {
@@ -40,11 +41,38 @@ const getPromptExamples = async (
   translationLanguage: Language,
   maxLenght = 2000
 ) => {
-  const examples = await vectorStore.similaritySearch(prompt, 5);
+  console.log("📖 Vector store - similarity search", prompt);
 
-  // console.log(examples);
+  let examples;
 
-  // console.log("🔥🔥🔥", examples);
+  try {
+    examples = await backOff(() => vectorStore.similaritySearch(prompt, 5), {
+      numOfAttempts: 10,
+      startingDelay: 1000 * 20,
+      timeMultiple: 2,
+      delayFirstAttempt: false,
+      retry: (e: any, attemptNumber: number) => {
+        if (!e.message.includes("429")) return false;
+
+        console.log(
+          "📖 Vector store - retrying attempt",
+          attemptNumber,
+          e.message
+        );
+        return true;
+      },
+    });
+  } catch (error) {
+    console.log("📖🫣 Error loading examples after exponential backoff", error);
+    throw error;
+  }
+
+  if (!examples) {
+    console.log("📖 Vector store - no results");
+    return [];
+  }
+
+  console.log("📖 Vector store - results ", examples);
 
   const examplesForSpecifiedLanguages = [];
   let totalLength = 0;

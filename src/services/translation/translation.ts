@@ -15,6 +15,7 @@ import queue from "./queue.js";
 import { AppError, AppErrorName } from "../../middlewares/errorHandler.js";
 import { AI_KEY } from "../../config.js";
 import { Api } from "chromadb/dist/main/generated/models.js";
+import { backOff } from "exponential-backoff";
 
 export interface APIMessage {
   role: APIRole;
@@ -60,38 +61,49 @@ const fetchAPIResponse = async (
   prompt: Array<APIMessage>
 ): Promise<[string, CreateCompletionResponseUsage]> => {
   let response;
+
+  console.log("Sending request to Open AI API ", prompt);
+
   try {
-    response = await openai.createChatCompletion({
-      ...modelSettings,
-      messages: prompt,
-    });
+    response = await backOff(
+      () =>
+        openai.createChatCompletion({
+          ...modelSettings,
+          messages: prompt,
+        }),
+      {
+        numOfAttempts: 10,
+        startingDelay: 1000 * 20,
+        timeMultiple: 2,
+        delayFirstAttempt: false,
+        retry: (e: any, attemptNumber: number) => {
+          if (
+            !e.message.includes("429") &&
+            !e.message.includes("503") &&
+            !e.message.includes("404")
+          )
+            return false;
+
+          console.log(
+            "🧌 Fetch translation - retrying attempt",
+            attemptNumber,
+            e.message
+          );
+          return true;
+        },
+      }
+    );
   } catch (error) {
-    if (
-      (error as Error)?.message?.includes("429") ||
-      (error as Error)?.message?.includes("503") ||
-      (error as Error)?.message?.includes("400")
-    ) {
-      console.log("TRYING AGAIN 429|503|400 AFTER DELAY");
-
-      await new Promise((resolve) => {
-        setTimeout(() => {
-          resolve(console.log("Second attempt to fetch Open AI response"));
-        }, 1000 * 20);
-      });
-
-      response = await openai.createChatCompletion({
-        ...modelSettings,
-        messages: prompt,
-      });
-    } else {
-      // all other errors
-      console.log("🌋 Error fetching data from Open AI API: ", error);
-      throw new AppError(AppErrorName.ApiError, "Open AI API refused request");
-    }
+    console.log("🧌🌋 Error fetching data from Open AI API: ", error);
+    throw new AppError(AppErrorName.ApiError, "Open AI API refused request");
   }
 
   if (response.status !== 200) {
-    console.log("🔥🔥🔥 OPEN AI ERROR ", response.status, response.statusText);
+    console.log(
+      "🧌🌋🔥🔥🔥 OPEN AI ERROR ",
+      response.status,
+      response.statusText
+    );
     console.log(response.data);
 
     throw new AppError(
@@ -130,6 +142,8 @@ export const translateBlockContent = async (
     type?: EditOption;
   }
 ): Promise<[TranslationBlock, Array<APIMessage>]> => {
+  console.log("🌋 Translate block content: ", block);
+
   if (block.text.length > 2500) {
     throw new AppError(
       AppErrorName.ValidationError,
@@ -139,8 +153,14 @@ export const translateBlockContent = async (
 
   const [prompt, newMessages] = await generatePrompt(block, history, options);
 
+  console.log("🌋 Prompt to attach: ", prompt);
+
   // const apiResponse = await queue.add(() => fetchAPIResponseFake(prompt));
   const apiResponse = await queue.add(() => fetchAPIResponse(prompt));
+
+  // const apiResponse = await fetchAPIResponse(prompt);
+
+  console.log("🌋 Response to fetch: ", apiResponse);
 
   if (!apiResponse)
     throw new AppError(
@@ -161,7 +181,6 @@ export const translateBlockContent = async (
     tokens: usage.completion_tokens,
   });
 
+  console.log("🌋 Translated: ", translatedBlock);
   return [translatedBlock, newMessages];
 };
-
-// TODO: make sure that one text block does not exceed limit of characters

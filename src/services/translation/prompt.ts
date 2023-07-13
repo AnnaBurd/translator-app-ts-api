@@ -25,6 +25,7 @@ export const generatePrompt = async (
     type?: EditOption;
   }
 ) => {
+  console.log("✍🏻 Generate prompt: ", block);
   const newMessages: Array<APIMessage> = [];
   let prompt: Array<APIMessage>;
 
@@ -57,12 +58,15 @@ export const generatePrompt = async (
 
   // TODO: if user input is too long split on blocks
   const userInput = block.text;
+  console.log("✍🏻 User input: ", userInput);
   const similarTexts = await getPromptExamples(
     userInput,
     originalLanguage,
     translationLanguage,
     4000 - userInput.length * 2
   );
+
+  console.log("✍🏻 Similar texts: ", similarTexts);
 
   // console.log("similarTexts: ", similarTexts);
 

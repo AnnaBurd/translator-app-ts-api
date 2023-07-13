@@ -4,9 +4,9 @@ import PQueue from "p-queue";
 
 const queue = new PQueue({
   concurrency: 1,
-  timeout: 1000 * 60 * 5, // Wait for response 5 minutes
+  timeout: 1000 * 60 * 30, // Wait for response 30 minutes
   throwOnTimeout: true,
-  intervalCap: 2,
+  intervalCap: 1,
   interval: 1000 * 40,
 });
 
@@ -17,6 +17,10 @@ queue.on("active", () => {
       queue.pending
     }`
   );
+});
+
+queue.on("error", (error) => {
+  console.log("🦄 Error", error);
 });
 
 export default queue;
