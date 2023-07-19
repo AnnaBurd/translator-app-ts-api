@@ -6,3 +6,8 @@ export const modelSettings = {
   frequency_penalty: 0.0,
   presence_penalty: 0.0,
 };
+
+export const promptSettings = {
+  maxPromptLength: 6000,
+  minExamplesLength: 3000,
+};

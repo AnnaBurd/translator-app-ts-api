@@ -4,10 +4,10 @@ import PQueue from "p-queue";
 
 const queue = new PQueue({
   concurrency: 1,
-  timeout: 1000 * 60 * 30, // Wait for response 30 minutes
+  timeout: 1000 * 60 * 10, // Wait for response maximum 10 minutes
   throwOnTimeout: true,
-  intervalCap: 1,
-  interval: 1000 * 40,
+  intervalCap: 3,
+  interval: 1000 * 60, // 3 RPM for free Open AI Plan // Note that using Open AI embeddings increases number of requests, so when using Open Ai insted of local vector store interval should be increased as well
 });
 
 let count = 0;
@@ -20,7 +20,7 @@ queue.on("active", () => {
 });
 
 queue.on("error", (error) => {
-  console.log("🦄 Error", error);
+  console.log("🦄 Queue Error", error);
 });
 
 export default queue;

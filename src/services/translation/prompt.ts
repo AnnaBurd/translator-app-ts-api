@@ -1,8 +1,13 @@
-import { Block, Language } from "../../models/Doc.js";
-
 import { ChatCompletionRequestMessageRoleEnum as APIRole } from "openai";
+
+// import { getPromptExamples } from "../store/store.js";
+import { getPromptExamples } from "../store/store-local.js";
+
+import { Block, Language } from "../../models/Doc.js";
 import { APIMessage, EditOption } from "./translation.js";
-import { getPromptExamples } from "./example-pairs-store/store.js";
+
+import { promptSettings } from "./translation.config.js";
+import logger from "../../utils/logger.js";
 
 const modelSystemRoles = {
   geologyExpert: "You have an Ph.D in petroleum geology",
@@ -14,8 +19,6 @@ const languages = {
   en: "English",
 };
 
-const modelPromptTemplates = {};
-
 export const generatePrompt = async (
   block: Block,
   history?: Array<APIMessage>,
@@ -25,63 +28,87 @@ export const generatePrompt = async (
     type?: EditOption;
   }
 ) => {
-  console.log("✍🏻 Generate prompt: ", block);
+  // TODO: if user input is too long split on blocks
+  const userInput = block.text;
+  let promptLength = userInput.length;
+
+  let prompt: Array<APIMessage> = [];
   const newMessages: Array<APIMessage> = [];
-  let prompt: Array<APIMessage>;
 
   const originalLanguage =
     (options?.originalLanguage as Language) || Language.Vn;
   const translationLanguage =
     (options?.targetLanguage as Language) || Language.Ru;
 
-  if (!history || history?.length === 0) {
-    const firstSystemMessage = {
+  const isFirstMessage = !history || history?.length === 0;
+
+  // If it is a new document, generate initial system message which describes the role the model should play
+  if (isFirstMessage) {
+    const initialSystemMessage = {
       role: APIRole.System,
-      content:
-        modelSystemRoles.geologyExpert +
-        `, fluent in ${languages[originalLanguage]} and ${languages[translationLanguage]}`,
+      content: `${modelSystemRoles.geologyExpert}, fluent in ${languages[originalLanguage]} and ${languages[translationLanguage]}`,
     };
 
-    prompt = [firstSystemMessage];
+    prompt.push(initialSystemMessage);
 
     newMessages.push({
-      ...firstSystemMessage,
+      ...initialSystemMessage,
       attachToPrompt: true,
     });
-  } else {
-    prompt = history
+
+    promptLength += initialSystemMessage.content.length;
+  }
+
+  // For consequent translations, attach to prompt initial system message and most recent messages from the history, up to the lengh threshold
+  if (!isFirstMessage) {
+    const previousMessages = history
       .filter((msg) => msg.attachToPrompt)
       .map((msg) => {
         return { role: msg.role, content: msg.content };
       });
+
+    prompt.push(previousMessages[0]);
+    promptLength += prompt[0].content.length;
+
+    for (let i = previousMessages.length - 1; i > 1; i = i - 2) {
+      prompt.push(previousMessages[i - 1]);
+      prompt.push(previousMessages[i]);
+      promptLength +=
+        previousMessages[i - 1].content.length +
+        previousMessages[i].content.length;
+
+      if (
+        promptLength >
+        promptSettings.maxPromptLength - promptSettings.minExamplesLength
+      ) {
+        break;
+      }
+    }
   }
 
-  // TODO: if user input is too long split on blocks
-  const userInput = block.text;
-  console.log("✍🏻 User input: ", userInput);
+  logger.verbose(
+    `📝 Attached messages to prompt: 
+${prompt.map((msg) => msg.content).join("\n")}`
+  );
+
+  // Find similar translation pairs in the vector store (similarity search) and attach to prompt
   const similarTexts = await getPromptExamples(
     userInput,
     originalLanguage,
     translationLanguage,
-    4000 - userInput.length * 2
+    promptSettings.maxPromptLength - promptLength
   );
-
-  console.log("✍🏻 Similar texts: ", similarTexts);
-
-  // console.log("similarTexts: ", similarTexts);
-
-  const promptText = `Translate from ${languages[originalLanguage]} to ${
-    languages[translationLanguage]
-  }, make sure to make no grammar or spelling mistakes${
+  const examples =
     similarTexts.length > 0
-      ? `, for example,
-  ${similarTexts.map((pair) => pair[0] + "\n" + pair[1]).join("\n\n")}`
-      : ""
-  }:
+      ? ", for example,\n" +
+        similarTexts.map((pair) => pair[0] + "\n" + pair[1]).join("\n\n")
+      : "";
+
+  const command = `Translate from ${languages[originalLanguage]} to ${languages[translationLanguage]}`;
+
+  const promptText = `${command}, make sure to make no grammar or spelling mistakes${examples}:
 
 ${userInput}`;
-
-  console.log("GENERATED Prompt text: ", promptText);
 
   const newPromptMessage = {
     role: APIRole.User,
@@ -95,13 +122,10 @@ ${userInput}`;
     attachToPrompt: false,
   });
 
-  // console.log("Generated prompt: ", prompt);
-  // console.log(
-  //   "And generated new outcoming messages for history: ",
-  //   newMessages
-  // );
-
-  console.log("PROMPT LENGHT: 🎈🔥🎈", JSON.stringify(prompt).length);
+  logger.verbose(
+    `📝 Generated prompt message: "${promptText}"
+length: ${promptText.length}`
+  );
 
   return [prompt, newMessages];
 };
