@@ -7,6 +7,24 @@ import { AppError, AppErrorName } from "../middlewares/errorHandler.js";
 
 const getUserUsageStatistics = async (userId: string) => {
   // TODO: store statistics not to recalculate it each time
+
+  // TODO: fix statistics
+
+  return {
+    // numberOfDocuments,
+    // lastEditionAt,
+    numOfParagraphsTranslatedThisMonth: 1111,
+    numberOfWordsTranslatedThisMonth: 1112,
+    totalTokens: 1113,
+    tokensUsedMonth: 1114,
+    tokensUsageStats: 1115,
+    wordsUsageStats: 1116,
+    docsUsageStats: 1117,
+    lastSixMonths: [0, 1, 2, 3, 4, 5],
+    limit: 1119,
+  };
+
+  console.time("statistics");
   const userDocuments = await Doc.find({ owner: userId });
   const numberOfDocuments = userDocuments.length;
   const lastEditionAt =
@@ -92,27 +110,11 @@ const getUserUsageStatistics = async (userId: string) => {
     });
   });
 
-  // const currDate = new Date();
-  // const baseMonth = new Date(currDate.getFullYear(), currDate.getMonth(), 1);
-  // baseMonth.setMonth(baseMonth.getMonth() - 4);
-  // const sortedMonths = [...months.splice(baseMonth.getMonth()), ...months];
-  // const labels = sortedMonths.slice(0, 6);
-
-  // const tokensPerMonthForCurrentYear = new Array(12).fill(0);
-  // userDocuments.forEach((doc) => {
-  //   doc.messagesHistory.forEach((message) => {
-  //     if (message.timestamp?.getFullYear() === new Date().getFullYear()) {
-  //       const month = message.timestamp?.getMonth();
-  //       const tokens = message.tokens;
-
-  //       if (month && tokens) tokensPerMonthForCurrentYear[month!] += tokens;
-  //     }
-  //   });
-  // });
+  console.timeEnd("statistics");
 
   return {
-    numberOfDocuments,
-    lastEditionAt,
+    // numberOfDocuments,
+    // lastEditionAt,
     numOfParagraphsTranslatedThisMonth,
     numberOfWordsTranslatedThisMonth,
     totalTokens: tokensUsedTotal,
