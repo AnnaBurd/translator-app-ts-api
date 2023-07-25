@@ -9,6 +9,23 @@ import logger from "../utils/logger.js";
 import User from "../models/User.js";
 import { AppError, AppErrorName } from "../middlewares/errorHandler.js";
 
+// TODO: filter
+// TODO: filter only relevant data
+
+// TODO: fix all data and error messages that application returns - make sure that no sensitive data slips out
+
+// TODO: tab through all pages and make sure that all outlines are in similar style
+
+// TODO: message admin on user registration, email users when their plans was changed
+
+// TODO: user profile - change email or password
+
+// TODO: refactor code and remove console.logs
+
+// TODO: hosting and githup representation
+
+// TODO: error messages and animations
+
 export const createNewDocument: RequestHandler = async (req, res, next) => {
   try {
     // Validate data
@@ -33,43 +50,55 @@ export const createNewDocument: RequestHandler = async (req, res, next) => {
   }
 };
 
+// Get preview information for a number of user's documents, paginated with default limit of 10 documents per page, recently changed documents come first
 export const getUserDocuments: RequestHandler = async (req, res, next) => {
   try {
-    // TODO: filter
-    // TODO: filter only relevant data
-    // TODO: pagination
+    // Use user-specified or defaul page number and number of items per page
+    const { page: userRequestedPage, limit: userRequestedLimit } = req.query;
+    const pageNumber = parseInt(userRequestedPage as string) || 1;
+    const itemsPerPage = parseInt(userRequestedLimit as string) || 10;
+    if (pageNumber < 1 || itemsPerPage < 1)
+      throw new AppError(
+        AppErrorName.ValidationError,
+        "Invalid page number or number of items, accept only positive integers"
+      );
 
-    const { page, limit } = req.query;
-
-    // Make sure that page and limit are valid numbers
-    const requestedPageNumber = parseInt(page as string) || 1;
-    const itemsPerPage = parseInt(limit as string) || 10;
-    if (requestedPageNumber < 1 || itemsPerPage < 1)
-      throw new Error("Invalid page or limit value");
-
-    console.log("getUserDocuments", page, limit, req.query);
-
-    const userDocuments = await Doc.find({
-      owner: req.currentUserId,
-      deleted: { $ne: true },
-    })
+    // Fetch relevant documents data from the database (note - does not fetch the whole document content)
+    const userDocuments = await Doc.find(
+      {
+        owner: req.currentUserId,
+        deleted: { $ne: true },
+      },
+      {
+        title: 1,
+        slug: 1,
+        changedAt: 1,
+        createdAt: 1,
+        lang: 1,
+        translationLang: 1,
+        content: { $slice: 1 },
+        translationContent: { $slice: 1 },
+      }
+    )
+      .sort({ changedAt: -1 })
       .limit(itemsPerPage)
-      .skip((requestedPageNumber - 1) * itemsPerPage);
+      .skip((pageNumber - 1) * itemsPerPage);
 
+    // Also fetch total number of documents for pagination
     const count = await Doc.countDocuments({
       owner: req.currentUserId,
       deleted: { $ne: true },
     });
 
-    // Generate output including doc text preview strings
+    // Transform data into the expected format
     const data = userDocuments.map((doc) => {
       return {
-        _id: doc._id,
         title: doc.title,
         slug: doc.slug,
         lang: doc.lang,
         translationLang: doc.translationLang,
         changedAt: doc.changedAt,
+        createdAt: doc.createdAt,
         textPreview: doc.content[0]?.text.slice(0, 200) || "",
         translationPreview: doc.translationContent[0]?.text.slice(0, 200) || "",
       };
@@ -78,7 +107,7 @@ export const getUserDocuments: RequestHandler = async (req, res, next) => {
     res.status(200).json({
       status: "success",
       data,
-      currentPage: page,
+      currentPage: pageNumber,
       totalPages: Math.ceil(count / itemsPerPage),
     });
   } catch (error) {
