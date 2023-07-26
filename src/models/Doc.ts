@@ -91,6 +91,10 @@ const schema = new Schema<IDoc>({
   deleted: Boolean,
 });
 
+schema.index({ owner: 1 });
+schema.index({ slug: 1 });
+schema.index({ lastChangedAt: -1 });
+
 // Update changed at timestamp on document save
 schema.pre("save", async function (next) {
   this.changedAt = new Date();

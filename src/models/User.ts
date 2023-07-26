@@ -5,10 +5,47 @@ import bcrypt from "bcrypt";
 To correctly calculate monthly tokens usage per user, the values are reset to 0 on the first day of each month.
 
 This is done by a MongoDB trigger function: 
-exports = function() {
-  const collection = context.services.get("Cluster0").db("translator").collection("users");
-  collection.updateMany({}, {$set: {tokensUsedMonth: 0}})
+exports = function () {
+  const db = context.services.get("Cluster0").db("translator");
+  const usersCollection = db.collection("users");
+  const documentsCollection = db.collection("docs");
+  
+  const currentDate = new Date();
+  const startingDate = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    1
+  );
+
+  const updateUsersUsage = async () => {
+    const activeUsersUsageStatsThisMonth = await usersCollection
+      .find(
+        { tokensUsedMonth: { $gt: 0 } },
+        { tokensUsedMonth: 1, wordsTranslatedMonth: 1 }
+      )
+      .toArray();
+
+    // Save statistics for current month into the history
+    activeUsersUsageStatsThisMonth.forEach(async (user) => {
+      console.log("user", JSON.stringify(user));
+
+      const documentsChangedThisMonth = await documentsCollection
+        .find(
+          { owner: user._id, changedAt: {$gt: startingDate}},
+          { changedAt: 1 }
+        )
+        .toArray();
+
+      usersCollection.findOneAndUpdate({_id: user._id}, {$push: {tokenUsageStats: {tokensUsedMonth: user.tokensUsedMonth, wordsTranslatedMonth: user.wordsTranslatedMonth, documentsChangedMonth: documentsChangedThisMonth.length, date: currentDate}}})
+    });
+    
+    // Clear statistics for next month
+    usersCollection.updateMany({}, {$set: {tokensUsedMonth: 0, wordsTranslatedMonth: 0}});
+  };
+
+  updateUsersUsage();
 };
+
 
 For correct work of the trigger function, the cluster should be "Linked Data Source" - there is a "Link" button in the Add Trigger window.
 */
@@ -18,17 +55,26 @@ export enum Role {
   Admin = "Admin",
 }
 
+export interface ITokenUsageStats {
+  tokensUsedMonth: number;
+  wordsTranslatedMonth: number;
+  documentsChangedMonth: number;
+  date: Date;
+}
+
 export interface IUser {
   firstName?: string;
   lastName?: string;
   email: string;
   password?: string;
   role?: Role;
-  tokensLimit: number;
-  tokensUsedMonth: number;
-  tokensUsedTotal: number;
   registrationDate?: Date;
   isBlocked?: boolean;
+  tokensLimit: number;
+  tokensUsedMonth: number;
+  wordsTranslatedMonth: number;
+  tokensUsedTotal: number;
+  tokenUsageStats: Array<ITokenUsageStats>;
 }
 
 export interface IUserMethods {
@@ -49,11 +95,20 @@ const schema = new Schema<IUser, UserModel, IUserMethods>({
   },
   password: { type: String, required: true },
   role: { type: String, default: Role.User },
-  tokensLimit: { type: Number, default: 0 },
-  tokensUsedMonth: { type: Number, default: 0 },
-  tokensUsedTotal: { type: Number, default: 0 },
   registrationDate: { type: Date, default: Date.now() },
   isBlocked: { type: Boolean },
+  tokensLimit: { type: Number, default: 0 },
+  tokensUsedMonth: { type: Number, default: 0 },
+  wordsTranslatedMonth: { type: Number, default: 0 },
+  tokensUsedTotal: { type: Number, default: 0 },
+  tokenUsageStats: [
+    {
+      tokensUsedMonth: Number,
+      wordsTranslatedMonth: Number,
+      documentsChangedMonth: Number,
+      date: Date,
+    },
+  ],
 });
 
 schema.index({ email: 1 });

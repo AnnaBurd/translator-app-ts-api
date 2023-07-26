@@ -3,7 +3,7 @@ import { CSVLoader } from "langchain/document_loaders/fs/csv";
 import { FaissStore } from "langchain/vectorstores/faiss";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 
-import { sampleTranslationDataPath } from "./config.js";
+import { sampleData } from "./config.js";
 
 import logger from "../../utils/logger.js";
 import { Language } from "../../models/Doc.js";
@@ -19,7 +19,7 @@ try {
 
   if (!storeAlreadyExists) {
     logger.info("📖 Loading csv dataset of sample translations");
-    const loader = new CSVLoader(sampleTranslationDataPath);
+    const loader = new CSVLoader(sampleData);
     const docs = await loader.load();
 
     logger.info(

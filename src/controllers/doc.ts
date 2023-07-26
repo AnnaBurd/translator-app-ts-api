@@ -241,8 +241,13 @@ export const editUserDocument: RequestHandler = async (req, res, next) => {
 
       // TODO: updating tokens usage on user acc each time and query user acc each time?
       // Update token usage balance on user's account:
+      console.log("🧌 UPDATING TOKENS USAge");
+      console.log("tokensUsed", tokensUsed);
       owner.tokensUsedMonth += tokensUsed;
+      console.log("owner.tokensUsedMonth", owner.tokensUsedMonth);
       owner.tokensUsedTotal += tokensUsed;
+      owner.wordsTranslatedMonth +=
+        inputBlock.text.match(/([^\s]+)/g)?.length ?? 0;
 
       if (owner.tokensUsedMonth > owner.tokensLimit)
         owner.tokensUsedMonth = owner.tokensLimit;

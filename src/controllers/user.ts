@@ -4,126 +4,59 @@ import logger from "../utils/logger.js";
 import User from "../models/User.js";
 import Doc from "../models/Doc.js";
 import { AppError, AppErrorName } from "../middlewares/errorHandler.js";
+import { getLastSixMonths } from "../utils/date-helper.js";
 
 const getUserUsageStatistics = async (userId: string) => {
-  // TODO: store statistics not to recalculate it each time
+  // Get user usage statistics (tokenUsageStats is generated and monthly updated in the database)
+  const usageStatistics = await User.findById(userId, {
+    tokensUsedTotal: 1,
+    tokensUsedMonth: 1,
+    tokensLimit: 1,
+    wordsTranslatedMonth: 1,
+    tokenUsageStats: { $slice: -4 }, // Get statistics for the last 4 months
+  });
 
-  // TODO: fix statistics
-
-  return {
-    // numberOfDocuments,
-    // lastEditionAt,
-    numOfParagraphsTranslatedThisMonth: 1111,
-    numberOfWordsTranslatedThisMonth: 1112,
-    totalTokens: 1113,
-    tokensUsedMonth: 1114,
-    tokensUsageStats: 1115,
-    wordsUsageStats: 1116,
-    docsUsageStats: 1117,
-    lastSixMonths: [0, 1, 2, 3, 4, 5],
-    limit: 1119,
-  };
-
-  console.time("statistics");
-  const userDocuments = await Doc.find({ owner: userId });
-  const numberOfDocuments = userDocuments.length;
-  const lastEditionAt =
-    (
-      await Doc.findOne({ owner: userId }).sort({
-        changedAt: -1,
-      })
-    )?.changedAt || null;
-
-  const documentsWithChangesThisMonth = await Doc.find({
+  const numberOfDocumentsChangedThisMonth = await Doc.countDocuments({
     owner: userId,
     changedAt: { $gte: new Date(new Date().setDate(1)) },
   });
 
-  const paragraphsTranslatedThisMonth = documentsWithChangesThisMonth.flatMap(
-    (doc) =>
-      doc.messagesHistory.filter(
-        (message) =>
-          (message?.timestamp || 0) >= new Date(new Date().setDate(1)) &&
-          message?.role === "assistant"
-      )
-  );
+  if (!usageStatistics)
+    throw new AppError(AppErrorName.AuthenticationError, "User not found");
 
-  const numOfParagraphsTranslatedThisMonth =
-    paragraphsTranslatedThisMonth.length;
-
-  const numberOfWordsTranslatedThisMonth = paragraphsTranslatedThisMonth.reduce(
-    (sumOfWords, currParagraph) => {
-      const words = currParagraph.content.match(/([^\s]+)/g);
-
-      // console.log("currParagraph", currParagraph);
-      // console.log("words", words);
-
-      return words ? sumOfWords + words.length : sumOfWords;
-    },
-    0
-  );
-
-  const user = await User.findById(userId);
-  if (!user) throw new Error("User not found");
-  const tokensUsedTotal = user.tokensUsedTotal;
-  const tokensUsedMonth = user.tokensUsedMonth;
-  const limit = user.tokensLimit;
-
-  // const totalTokens = userDocuments.reduce(
-  //   (sumOfTokens, currDoc) => sumOfTokens + currDoc.tokensUsed,
-  //   0
-  // );
-
-  const currDate = new Date();
-  const baseMonth = new Date(currDate.getFullYear(), currDate.getMonth(), 1);
-  baseMonth.setMonth(baseMonth.getMonth() - 4);
-  const lastSixMonths = Array.from(
-    { length: 6 },
-    (_, i) => new Date(baseMonth.getFullYear(), baseMonth.getMonth() + i, 1)
-  );
-
-  // console.log("LAST SIX M", lastSixMonths);
+  // Transform token usage stats to array (as used on the frontend)
+  // TODO: can edit frontend code as well to minimize unnecessary data transformations
+  const lastSixMonths = getLastSixMonths();
 
   const tokensUsageStats = new Array(6).fill(0);
   const wordsUsageStats = new Array(6).fill(0);
   const docsUsageStats = new Array(6).fill(0);
 
-  userDocuments.forEach((doc) => {
-    if (doc.createdAt && doc.createdAt >= baseMonth)
-      docsUsageStats[(doc.createdAt.getMonth() + 4) % 6] += 1;
-
-    // console.log("doc.createdAt", docsUsageStats);
-
-    doc.messagesHistory.forEach((message) => {
-      // console.log(message);
-      if (message.timestamp && message.timestamp > baseMonth) {
-        const month = message.timestamp?.getMonth();
-        const tokens = message.tokens;
-        const words = message.content.match(/([^\s]+)/g);
-
-        // console.log("month", month);
-        // console.log("tokens", tokens);
-        // console.log("words", words);
-        if (month && tokens) tokensUsageStats[(month! + 4) % 6] += tokens;
-        if (month && words) wordsUsageStats[(month! + 4) % 6] += words.length;
-      }
-    });
+  usageStatistics.tokenUsageStats.forEach((stat) => {
+    const index = lastSixMonths.findIndex(
+      (month) => month.getMonth() === stat.date.getMonth()
+    );
+    if (index === -1) return;
+    tokensUsageStats[index] = stat.tokensUsedMonth;
+    wordsUsageStats[index] = stat.wordsTranslatedMonth;
+    docsUsageStats[index] = stat.documentsChangedMonth;
   });
 
-  console.timeEnd("statistics");
+  // Add statistics for current month
+  tokensUsageStats[4] = usageStatistics.tokensUsedMonth;
+  wordsUsageStats[4] = usageStatistics.wordsTranslatedMonth;
+  docsUsageStats[4] = numberOfDocumentsChangedThisMonth;
 
   return {
-    // numberOfDocuments,
-    // lastEditionAt,
-    numOfParagraphsTranslatedThisMonth,
-    numberOfWordsTranslatedThisMonth,
-    totalTokens: tokensUsedTotal,
-    tokensUsedMonth,
-    tokensUsageStats,
-    wordsUsageStats,
-    docsUsageStats,
-    lastSixMonths,
-    limit,
+    totalTokens: usageStatistics.tokensUsedTotal,
+    tokensUsedMonth: usageStatistics.tokensUsedMonth,
+    limit: usageStatistics.tokensLimit,
+    tokensUsageStats: tokensUsageStats,
+    wordsUsageStats: wordsUsageStats,
+    docsUsageStats: docsUsageStats,
+    numOfDocumentsChangedThisMonth: numberOfDocumentsChangedThisMonth,
+    numberOfWordsTranslatedThisMonth: usageStatistics.wordsTranslatedMonth,
+    lastSixMonths: lastSixMonths,
   };
 };
 
