@@ -113,6 +113,19 @@ const schema = new Schema<IUser, UserModel, IUserMethods>({
 
 schema.index({ email: 1 });
 
+// Implement method for password hashing
+schema.method("hashPassword", async function hashPassword() {
+  this.password = await bcrypt.hash(this.password, 12);
+});
+
+// Implement method for checking hashed passwords
+schema.method(
+  "isCorrectPassword",
+  async function isCorrectPassword(inputPassword: string) {
+    return await bcrypt.compare(inputPassword, this.password);
+  }
+);
+
 // Issue names to anonymous users
 schema.pre("save", async function (next) {
   if (!this.firstName) {
@@ -121,23 +134,19 @@ schema.pre("save", async function (next) {
   next();
 });
 
-// Hash user passwords to store in the database
-schema.method("hashPassword", async function hashPassword() {
-  this.password = await bcrypt.hash(this.password, 12);
-});
-
-schema.method(
-  "isCorrectPassword",
-  async function isCorrectPassword(inputPassword: string) {
-    return await bcrypt.compare(inputPassword, this.password);
-  }
-);
-
+// Hash user passwords before saving to the database
 schema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
   await this.hashPassword();
   next();
+});
+
+// Convert email to lowercase
+schema.pre("save", async function (next) {
+  if (!this.isModified("email")) return next();
+
+  this.email = this.email.toLowerCase();
 });
 
 const User = model<IUser, UserModel>("User", schema);
