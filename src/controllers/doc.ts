@@ -12,6 +12,8 @@ import { AppError, AppErrorName } from "../middlewares/errorHandler.js";
 // TODO: filter
 // TODO: filter only relevant data
 
+// TODO: count dollars according to tokens usage and set application hard limit!
+
 // TODO: fix all data and error messages that application returns - make sure that no sensitive data slips out
 
 // TODO: tab through all pages and make sure that all outlines are in similar style
@@ -25,6 +27,26 @@ import { AppError, AppErrorName } from "../middlewares/errorHandler.js";
 // TODO: hosting and githup representation
 
 // TODO: error messages and animations
+
+// TODO: dynamic module imports to reduce bundle size
+
+// TODO: rename store to datastore service
+
+// TODO: messaging and email service
+
+// TODO: try GPT-4
+
+// TODO: implement edits of the translation
+
+// TODO: implement error pages
+
+// TODO: allow to store documents in local storage (ask for permission in upload form
+
+// TODO: implement undo and redo
+
+// TODO: implement document rename / duplicate / delete functionality
+
+// TODO: count usage in dollars and add hard and soft limits
 
 export const createNewDocument: RequestHandler = async (req, res, next) => {
   try {
@@ -186,16 +208,26 @@ export const editUserDocument: RequestHandler = async (req, res, next) => {
 
       if (inputBlockIndex === -1) throw new Error("Block not found");
 
-      // Make sure tokens usage is withing limits
-      const owner = await User.findById(doc.owner);
-      if (!owner) throw new Error("User was already deleted");
-      if (owner.tokensUsedMonth >= owner.tokensLimit)
+      // Make sure tokens usage is within limits
+      const owner = await User.findById(doc.owner, {
+        tokensLimit: 1,
+        tokensUsedTotal: 1,
+        isBlocked: 1,
+        tokensUsedMonth: 1,
+        wordsTranslatedMonth: 1,
+      });
+      if (!owner) throw new Error("User was already deleted.");
+      if (owner.isBlocked)
+        throw new AppError(AppErrorName.BlockedUsage, "User is blocked.");
+
+      if (owner.tokensLimit === 0)
         throw new AppError(
-          AppErrorName.RunOutOfTokens,
-          "Run out of tokens for this month."
+          AppErrorName.NotActivatedAccount,
+          "Tokens usage is not granted yet."
         );
 
-      if (owner.isBlocked) throw new Error("User is blocked");
+      if (owner.tokensUsedTotal >= owner.tokensLimit)
+        throw new AppError(AppErrorName.RunOutOfTokens, "Run out of tokens.");
 
       // Update translation after original text was changed
       const [translatedBlock, newMessages] = await translateBlockContent(
@@ -240,19 +272,35 @@ export const editUserDocument: RequestHandler = async (req, res, next) => {
       doc.tokensUsed += tokensUsed;
 
       // TODO: updating tokens usage on user acc each time and query user acc each time?
+      // Can go with a separate document for user's tokens usage and balance?
       // Update token usage balance on user's account:
-      console.log("🧌 UPDATING TOKENS USAge");
-      console.log("tokensUsed", tokensUsed);
-      owner.tokensUsedMonth += tokensUsed;
-      console.log("owner.tokensUsedMonth", owner.tokensUsedMonth);
-      owner.tokensUsedTotal += tokensUsed;
-      owner.wordsTranslatedMonth +=
-        inputBlock.text.match(/([^\s]+)/g)?.length ?? 0;
+      // owner.tokensUsedMonth += tokensUsed;
+      // owner.tokensUsedTotal += tokensUsed;
+      // console.log("owner.tokensUsedTotal", owner.tokensUsedTotal);
+      // owner.wordsTranslatedMonth +=
+      //   inputBlock.text.match(/([^\s]+)/g)?.length ?? 0;
 
-      if (owner.tokensUsedMonth > owner.tokensLimit)
-        owner.tokensUsedMonth = owner.tokensLimit;
+      const numberOfWords = inputBlock.text.match(/([^\s]+)/g)?.length || 0;
+      const tokensToAdd =
+        owner.tokensUsedTotal + tokensUsed > owner.tokensLimit
+          ? owner.tokensLimit - owner.tokensUsedTotal
+          : tokensUsed;
 
-      await owner.save();
+      // console.log("owner.wordsTranslatedMonth", owner.wordsTranslatedMonth);
+      if (owner.tokensUsedTotal > owner.tokensLimit)
+        owner.tokensUsedTotal = owner.tokensLimit;
+
+      // console.log("owner", owner);
+
+      await User.findByIdAndUpdate(owner._id, {
+        $inc: {
+          tokensUsedTotal: tokensToAdd,
+          tokensUsedMonth: tokensToAdd,
+          wordsTranslatedMonth: numberOfWords,
+        },
+      });
+
+      console.log("doc save");
 
       await doc?.save();
 

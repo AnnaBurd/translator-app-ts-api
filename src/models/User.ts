@@ -75,6 +75,7 @@ export interface IUser {
   wordsTranslatedMonth: number;
   tokensUsedTotal: number;
   tokenUsageStats: Array<ITokenUsageStats>;
+  status: "active" | "inactive" | "blocked";
 }
 
 export interface IUserMethods {
@@ -109,9 +110,11 @@ const schema = new Schema<IUser, UserModel, IUserMethods>({
       date: Date,
     },
   ],
+  status: { type: String, default: "inactive" },
 });
 
 schema.index({ email: 1 });
+schema.index({ status: 1 });
 
 // Implement method for password hashing
 schema.method("hashPassword", async function hashPassword() {
@@ -147,6 +150,23 @@ schema.pre("save", async function (next) {
   if (!this.isModified("email")) return next();
 
   this.email = this.email.toLowerCase();
+  next();
+});
+
+// Update user's status
+schema.pre("save", async function (next) {
+  if (!this.isModified("isBlocked") && !this.isModified("tokensUsedMonth"))
+    return next();
+
+  if (this.tokensUsedMonth > 0 && !this.isBlocked) {
+    this.status = "active";
+  } else if (this.isBlocked) {
+    this.status = "blocked";
+  } else {
+    this.status = "inactive";
+  }
+
+  next();
 });
 
 const User = model<IUser, UserModel>("User", schema);

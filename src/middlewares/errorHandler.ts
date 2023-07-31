@@ -10,6 +10,8 @@ export enum AppErrorName {
   ApiError = "ApiError",
   ResourceNotFoundError = "ResourceNotFoundError",
   RunOutOfTokens = "RunOutOfTokens",
+  BlockedUsage = "BlockedUsage",
+  NotActivatedAccount = "NotActivatedAccount",
 }
 
 export class AppError extends Error {
@@ -21,7 +23,7 @@ export class AppError extends Error {
 // TODO: write meaningful error messages/status codes
 export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   logger.error(`🏸 Got to express errorHandler: ${err.name} - ${err.message}`);
-  // console.log(err);
+  console.log(err);
 
   switch (err.name) {
     case AppErrorName.ResourceNotFoundError:
@@ -38,6 +40,10 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
       return res.status(400).json({ error: err, errMessage: err.message });
     case AppErrorName.RunOutOfTokens:
       return res.status(402).json({ error: err, errMessage: err.message });
+    case AppErrorName.BlockedUsage:
+      return res.status(403).json({ error: err, errMessage: err.message });
+    case AppErrorName.NotActivatedAccount:
+      return res.status(426).json({ error: err, errMessage: err.message });
     default:
       return res.status(500).json({ error: err, errMessage: err.message });
   }

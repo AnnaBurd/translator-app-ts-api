@@ -84,39 +84,46 @@ export const getUserProfile: RequestHandler = async (req, res, next) => {
   }
 };
 
-// TODO: refactor
 export const getAllUsersStats: RequestHandler = async (req, res, next) => {
   logger.verbose(
-    `Getting all users info (required by admin): ${req.currentUser?.email}`
+    `Getting all users info (requested by admin: ${req.currentUser?.email})`
   );
   try {
-    const activeUsers = await User.find({
+    const totalUsersCount = await User.countDocuments({
       deleted: { $ne: true },
-      tokensUsedMonth: { $gt: 0 },
     });
-
-    const tokensUsedMonth = activeUsers.reduce(
-      (total, currUser) => total + currUser.tokensUsedMonth,
-      0
-    );
-
-    const blockedUsers = await User.countDocuments({
+    const blockedUsersCount = await User.countDocuments({
       deleted: { $ne: true },
       isBlocked: true,
     });
 
-    const inactiveUsers =
-      (await User.countDocuments()) - activeUsers.length - blockedUsers;
+    const usersWithMonthlyTokensUsage = await User.find(
+      {
+        deleted: { $ne: true },
+        tokensUsedMonth: { $gt: 0 },
+      },
+      { tokensUsedMonth: 1, isBlocked: 1, _id: 0 }
+    );
 
-    // console.log(activeUsers);
+    const totalTokensUsedMonth = usersWithMonthlyTokensUsage.reduce(
+      (total, currUser) => total + currUser.tokensUsedMonth,
+      0
+    );
+
+    const activeUsersCount = usersWithMonthlyTokensUsage.filter(
+      (user) => !user.isBlocked
+    ).length;
+
+    const inactiveUsersCount =
+      totalUsersCount - activeUsersCount - blockedUsersCount;
 
     res.status(200).json({
       status: "success",
       data: {
-        activeUsers: activeUsers.length,
-        tokensUsedMonth,
-        blockedUsers,
-        inactiveUsers,
+        activeUsers: activeUsersCount,
+        blockedUsers: blockedUsersCount,
+        inactiveUsers: inactiveUsersCount,
+        tokensUsedMonth: totalTokensUsedMonth,
       },
     });
   } catch (error) {
@@ -129,30 +136,44 @@ export const getAllUsers: RequestHandler = async (req, res, next) => {
     `Getting all users info (required by admin): ${req.currentUser?.email}`
   );
 
-  // TODO: filter user data to output only relevant fields
-
-  const { page, limit } = req.query;
-
-  // Make sure that page and limit are valid numbers
-  const requestedPageNumber = parseInt(page as string) || 1;
-  const itemsPerPage = parseInt(limit as string) || 2;
-  if (requestedPageNumber < 1 || itemsPerPage < 1)
-    throw new Error("Invalid page or limit value");
+  // Use user-specified or defaul page number and number of items per page
+  const { page: userRequestedPage, limit: userRequestedLimit } = req.query;
+  const pageNumber = parseInt(userRequestedPage as string) || 1;
+  const itemsPerPage = parseInt(userRequestedLimit as string) || 2;
+  if (pageNumber < 1 || itemsPerPage < 1)
+    throw new AppError(
+      AppErrorName.ValidationError,
+      "Invalid page number or number of items, accept only positive integers"
+    );
 
   try {
-    const users = await User.find({ deleted: { $ne: true } })
+    const users = await User.find(
+      { deleted: { $ne: true } },
+      {
+        firstName: 1,
+        lastName: 1,
+        email: 1,
+        role: 1,
+        registrationDate: 1,
+        tokensUsedMonth: 1,
+        tokensUsedTotal: 1,
+        tokensLimit: 1,
+        isBlocked: 1,
+        _id: 0,
+      }
+    )
+      .sort({ status: 1, email: 1 })
       .limit(itemsPerPage)
-      .skip((requestedPageNumber - 1) * itemsPerPage);
+      .skip((pageNumber - 1) * itemsPerPage);
 
     const count = await User.countDocuments({
       deleted: { $ne: true },
     });
 
-    // TODO: paginate results
     res.status(200).json({
       status: "success",
       data: users,
-      currentPage: page,
+      currentPage: pageNumber,
       totalPages: Math.ceil(count / itemsPerPage),
     });
   } catch (error) {
@@ -162,60 +183,57 @@ export const getAllUsers: RequestHandler = async (req, res, next) => {
 };
 
 export const updateUserAccount: RequestHandler = async (req, res, next) => {
-  const userEmail = req.params.userEmail;
-
-  const { isBlocked, planOption } = req.body;
-
-  console.log("isBlocked", isBlocked);
-  console.log("userEmail", userEmail);
-
-  console.log("planOption", planOption);
-
-  console.log("req.body", req.body);
-
-  // TODO: filter user data to output only relevant fields
-
-  // const { page, limit } = req.query;
-
-  // Make sure that page and limit are valid numbers
-  // const requestedPageNumber = parseInt(page as string) || 1;
-  // const itemsPerPage = parseInt(limit as string) || 2;
-  // if (requestedPageNumber < 1 || itemsPerPage < 1)
-  //   throw new Error("Invalid page or limit value");
-
-  // const updates: { isBlocked?: boolean; tokensLimit?: number } = {};
-  // if (isBlocked !== "undefined") updates["isBlocked"] = isBlocked;
-  // if (planOption !== "undefined") updates["tokensLimit"] = newLimit;
-
-  // console.log("updates", updates);
-
   try {
-    const user = await User.findOne({ email: userEmail });
+    // Get requested updates from request body
+    const { isBlocked, planOption: newTokensLimitIncrease } = req.body;
 
-    if (!user) throw new Error("User not found");
+    // Prepare mongodb updates object
+    let updates: any = {};
 
-    if (isBlocked !== undefined) user.isBlocked = isBlocked;
-    if (planOption !== undefined) {
-      const newLimit =
-        planOption === "Enterprise"
-          ? 100000000
-          : planOption === "Premium"
-          ? 10000000
-          : planOption === "Standard"
-          ? 1000000
-          : 0;
-      user.tokensLimit = newLimit;
+    // Block/unblock user
+    if (isBlocked !== undefined) updates.isBlocked = isBlocked;
+
+    // Add tokens to user account limit
+    // Note: increaseBy should correspond to the frontend values
+    if (newTokensLimitIncrease !== undefined) {
+      let increaseBy = 0;
+      switch (newTokensLimitIncrease) {
+        case "Standart":
+          increaseBy = 10000;
+          break;
+        case "Comfort":
+          increaseBy = 100000;
+          break;
+        case "Premium":
+          increaseBy = 1000000;
+          break;
+      }
+
+      updates = { ...updates, $inc: { tokensLimit: increaseBy } }; // Atomicly increase limit
     }
 
-    await user.save();
+    // Get back updated user info
+    const updatedUser = await User.findOneAndUpdate(
+      { email: req.params.userEmail },
+      updates,
+      { fields: { isBlocked: 1, tokensLimit: 1 }, new: true } // Return only updated fields,
+    );
 
+    // Check if update was successful
+    if (!updatedUser)
+      throw new AppError(
+        AppErrorName.ResourceNotFoundError,
+        "Trying to update not existing user"
+      );
+
+    // Send updated fields back to client
     res.status(200).json({
       status: "success",
-      data: user,
+      data: updatedUser,
     });
   } catch (error) {
     logger.error(
-      `🔥 Could not update users data (${(error as Error).message})`
+      `🔥 Could not update user's data (${(error as Error).message})`
     );
     next(error);
   }

@@ -68,13 +68,6 @@ export const signup: RequestHandler = async (req, res, next) => {
       expires: new Date(new Date().getTime() + 86400000 * 15),
     }).save();
 
-    // Imitate long server response
-    // await new Promise((resolve) => {
-    //   setTimeout(() => {
-    //     resolve(console.log("Recieved API RESPONSE"));
-    //   }, 10000);
-    // });
-
     // Send auth tokens to user
     attachRefreshToken(refreshTokenValue, res)
       .status(201)
