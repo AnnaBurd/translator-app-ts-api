@@ -41,7 +41,7 @@ const attachRefreshToken = (value: string, res: Response) => {
 };
 
 // Make client side delete cookie (?)
-const detatchRefreshToken = (res: Response) => {
+export const detatchRefreshToken = (res: Response) => {
   // TODO: make sure cookie options are the same as when attaching cookie
   // TODO: test if cookie gets deleted in prod mode
   res.clearCookie(REFRESH_TOKEN_NAME, { httpOnly: true }); // secure: true
@@ -97,7 +97,7 @@ export const signin: RequestHandler = async (req, res, next) => {
     if (!email || !password) {
       throw new Error(`Provide email and password to sign in`);
     }
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email, isDeleted: { $ne: true } });
     if (!user || !(await user.isCorrectPassword(password as string))) {
       throw new Error(`Incorrect user's credentials`);
     }
@@ -202,7 +202,10 @@ export const silentSignIn: RequestHandler = async (req, res, next) => {
     // Re-Issue access token
     const accessToken = issueAccessTokenById(currentUserInfo.userid);
 
-    const user = await User.findById(currentUserInfo.userid);
+    const user = await User.findOne({
+      id: currentUserInfo.userid,
+      isDeleted: { $ne: true },
+    });
 
     if (!user) {
       throw new Error("User does not exist (Anymore)");

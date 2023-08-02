@@ -70,12 +70,14 @@ export interface IUser {
   role?: Role;
   registrationDate?: Date;
   isBlocked?: boolean;
+  isDeleted?: boolean;
   tokensLimit: number;
   tokensUsedMonth: number;
   wordsTranslatedMonth: number;
   tokensUsedTotal: number;
   tokenUsageStats: Array<ITokenUsageStats>;
   status: "active" | "inactive" | "blocked";
+  photoUrl?: string;
 }
 
 export interface IUserMethods {
@@ -98,6 +100,7 @@ const schema = new Schema<IUser, UserModel, IUserMethods>({
   role: { type: String, default: Role.User },
   registrationDate: { type: Date, default: Date.now() },
   isBlocked: { type: Boolean },
+  isDeleted: { type: Boolean },
   tokensLimit: { type: Number, default: 0 },
   tokensUsedMonth: { type: Number, default: 0 },
   wordsTranslatedMonth: { type: Number, default: 0 },
@@ -111,6 +114,7 @@ const schema = new Schema<IUser, UserModel, IUserMethods>({
     },
   ],
   status: { type: String, default: "inactive" },
+  photoUrl: String,
 });
 
 schema.index({ email: 1 });

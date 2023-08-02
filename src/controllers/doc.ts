@@ -9,10 +9,13 @@ import logger from "../utils/logger.js";
 import User from "../models/User.js";
 import { AppError, AppErrorName } from "../middlewares/errorHandler.js";
 
+// TODO: restore password functionality, email to user with a link to reset password
+
 // TODO: filter
 // TODO: filter only relevant data
 
 // TODO: count dollars according to tokens usage and set application hard limit!
+// TODO: count usage in dollars and add hard and soft limits
 
 // TODO: fix all data and error messages that application returns - make sure that no sensitive data slips out
 
@@ -26,8 +29,6 @@ import { AppError, AppErrorName } from "../middlewares/errorHandler.js";
 
 // TODO: hosting and githup representation
 
-// TODO: error messages and animations
-
 // TODO: dynamic module imports to reduce bundle size
 
 // TODO: rename store to datastore service
@@ -38,15 +39,15 @@ import { AppError, AppErrorName } from "../middlewares/errorHandler.js";
 
 // TODO: implement edits of the translation
 
-// TODO: implement error pages
-
 // TODO: allow to store documents in local storage (ask for permission in upload form
 
 // TODO: implement undo and redo
 
 // TODO: implement document rename / duplicate / delete functionality
 
-// TODO: count usage in dollars and add hard and soft limits
+// TODO: refactor code, write comments and a nice presentation on github
+
+// TODO: cover codebase with tests before adding new features
 
 export const createNewDocument: RequestHandler = async (req, res, next) => {
   try {

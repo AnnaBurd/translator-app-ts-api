@@ -5,6 +5,9 @@ import User from "../models/User.js";
 import Doc from "../models/Doc.js";
 import { AppError, AppErrorName } from "../middlewares/errorHandler.js";
 import { getLastSixMonths } from "../utils/date-helper.js";
+import RefreshToken from "../models/RefreshToken.js";
+import { Response } from "express-serve-static-core";
+import { detatchRefreshToken } from "./auth.js";
 
 const getUserUsageStatistics = async (userId: string) => {
   // Get user usage statistics (tokenUsageStats is generated and monthly updated in the database)
@@ -79,6 +82,112 @@ export const getUserProfile: RequestHandler = async (req, res, next) => {
       status: "success",
       data: { user: currentUser, usageStatistics },
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateUserProfile: RequestHandler = async (req, res, next) => {
+  try {
+    logger.verbose(`Getting user info for user with id: ${req.currentUserId}`);
+
+    // TODO: filter user data to output only relevant fields
+    const currentUser = await User.findById(req.currentUserId);
+
+    if (!currentUser)
+      throw new AppError(AppErrorName.AuthenticationError, "User not found");
+
+    const { firstName, lastName, newEmail, currentPassword, newPassword } =
+      req.body;
+
+    console.log(
+      "got data:",
+      firstName,
+      lastName,
+      newEmail,
+      currentPassword,
+      newPassword
+    );
+
+    // Update user name
+    if (firstName) currentUser.firstName = firstName;
+    if (lastName) currentUser.lastName = lastName;
+
+    // Update user email (!) email should be unique
+    if (newEmail) currentUser.email = newEmail;
+
+    // Update user password (! check if previous password is correct)
+    if (currentPassword && newPassword) {
+      const isCorrectPassword = await currentUser.isCorrectPassword(
+        currentPassword
+      );
+      if (!isCorrectPassword)
+        throw new AppError(
+          AppErrorName.AuthenticationError,
+          "Incorrect password"
+        );
+      currentUser.password = newPassword;
+    }
+
+    await currentUser.save();
+
+    // Send response back to client
+    res.status(200).json({
+      status: "success",
+      data: {
+        user: {
+          email: currentUser.email,
+          firstName: currentUser.firstName,
+          lastName: currentUser.lastName,
+          photo: currentUser.photoUrl,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+export const deleteUserProfile: RequestHandler = async (req, res, next) => {
+  try {
+    logger.verbose(`User requested to delete profile: ${req.currentUserId}`);
+
+    // TODO: filter user data to output only relevant fields
+    const currentUser = await User.findById(req.currentUserId);
+
+    if (!currentUser)
+      throw new AppError(AppErrorName.AuthenticationError, "User not found");
+
+    const { confirmDelete } = req.body;
+
+    if (!confirmDelete)
+      throw new AppError(
+        AppErrorName.ValidationError,
+        "Confirm delete is required"
+      );
+
+    // Update user password
+    // Note: set user deleted flag, but do not remove data from the database yet
+    // if (confirmDelete) await User.deleteOne({ _id: req.currentUserId });
+
+    await User.updateOne(
+      { _id: req.currentUserId },
+      {
+        isDeleted: true,
+        email: `${currentUser.email}-deleted-${Date.now().toString()}`,
+      }
+    );
+
+    // ALSO CLEAR AL ISSUED TO USER REFRESH TOKENS
+    await RefreshToken.deleteMany({ owner: req.currentUserId });
+
+    // logout user
+    // Inform browser on client side that refresh token cookie should be deleted
+    detatchRefreshToken(res);
+
+    // Note: access token is still active, client side needs to  delete it
+
+    // Send response back to client
+    res.status(204).json({ status: "success", data: "deleted" });
   } catch (error) {
     next(error);
   }

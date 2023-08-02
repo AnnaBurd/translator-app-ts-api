@@ -2,10 +2,12 @@ import { Router } from "express";
 import { protectRoute, restrictRouteTo } from "../middlewares/auth.js";
 import { Role } from "../models/User.js";
 import {
+  deleteUserProfile,
   getAllUsers,
   getAllUsersStats,
   getUserProfile,
   updateUserAccount,
+  updateUserProfile,
 } from "../controllers/user.js";
 import { signup, signin, signout } from "../controllers/auth.js";
 
@@ -18,10 +20,11 @@ router.get("/signout", signout);
 // For signed in users:
 router.use(protectRoute);
 
-router.route("/profile").get(getUserProfile).patch().delete();
-
-// router.patch("/profile"); // TODO:
-// router.delete("/profile"); // TODO:
+router
+  .route("/profile")
+  .get(getUserProfile)
+  .patch(updateUserProfile)
+  .delete(deleteUserProfile);
 
 // For admins:
 router.use(restrictRouteTo(Role.Admin));
