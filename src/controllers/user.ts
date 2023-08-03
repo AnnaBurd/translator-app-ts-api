@@ -87,6 +87,34 @@ export const getUserProfile: RequestHandler = async (req, res, next) => {
   }
 };
 
+export const getUserProfileDetails: RequestHandler = async (req, res, next) => {
+  try {
+    logger.verbose(`Getting user info for user with id: ${req.currentUserId}`);
+
+    const currentUser = await User.findById(req.currentUserId, {
+      registrationDate: 1,
+      email: 1,
+      _id: 0,
+    });
+
+    if (!currentUser)
+      throw new AppError(AppErrorName.AuthenticationError, "User not found");
+
+    // console.log("getting user profile with statistics")
+
+    // Send response back to client
+    res.status(200).json({
+      status: "success",
+      data: {
+        registrationDate: currentUser.registrationDate,
+        email: currentUser.email,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const updateUserProfile: RequestHandler = async (req, res, next) => {
   try {
     logger.verbose(`Getting user info for user with id: ${req.currentUserId}`);

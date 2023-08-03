@@ -6,6 +6,7 @@ import {
   getAllUsers,
   getAllUsersStats,
   getUserProfile,
+  getUserProfileDetails,
   updateUserAccount,
   updateUserProfile,
 } from "../controllers/user.js";
@@ -25,6 +26,8 @@ router
   .get(getUserProfile)
   .patch(updateUserProfile)
   .delete(deleteUserProfile);
+
+router.route("/profile/details").get(getUserProfileDetails);
 
 // For admins:
 router.use(restrictRouteTo(Role.Admin));

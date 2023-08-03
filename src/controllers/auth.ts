@@ -143,11 +143,15 @@ export const refreshAccess: RequestHandler = async (req, res, next) => {
     // Decode token payload value from the user request
     const [currentUserInfo, refreshTokenValue] = await verifyRefreshToken(req);
 
+    // console.log("currentUserInfo", currentUserInfo);
+
     // Check that refresh token is still valid
     // Note: Refresh token can expire, so if the database TTL policy works correctly expired tokens should be automatically removed
     const issuedRefreshTokens = await RefreshToken.find({
       user: currentUserInfo.userid,
     });
+
+    // console.log("issuedRefreshTokens", issuedRefreshTokens);
 
     if (
       !issuedRefreshTokens.find((token) => token.value === refreshTokenValue)
@@ -203,7 +207,7 @@ export const silentSignIn: RequestHandler = async (req, res, next) => {
     const accessToken = issueAccessTokenById(currentUserInfo.userid);
 
     const user = await User.findOne({
-      id: currentUserInfo.userid,
+      _id: currentUserInfo.userid,
       isDeleted: { $ne: true },
     });
 
