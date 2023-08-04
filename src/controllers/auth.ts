@@ -129,6 +129,7 @@ export const signin: RequestHandler = async (req, res, next) => {
           lastName: user.lastName,
           email: user.email,
           role: user.role,
+          photoUrl: user.photoUrl,
         },
         accessToken,
       });
@@ -223,6 +224,7 @@ export const silentSignIn: RequestHandler = async (req, res, next) => {
         lastName: user.lastName,
         email: user.email,
         role: user.role,
+        photoUrl: user.photoUrl,
       },
     });
   } catch (error) {

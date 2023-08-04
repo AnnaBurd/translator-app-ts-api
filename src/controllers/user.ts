@@ -1,3 +1,4 @@
+import fs from "fs";
 import { RequestHandler } from "express";
 
 import logger from "../utils/logger.js";
@@ -6,8 +7,8 @@ import Doc from "../models/Doc.js";
 import { AppError, AppErrorName } from "../middlewares/errorHandler.js";
 import { getLastSixMonths } from "../utils/date-helper.js";
 import RefreshToken from "../models/RefreshToken.js";
-import { Response } from "express-serve-static-core";
 import { detatchRefreshToken } from "./auth.js";
+import { removeUploadedFile } from "../services/filestorage/filestorage.js";
 
 const getUserUsageStatistics = async (userId: string) => {
   // Get user usage statistics (tokenUsageStats is generated and monthly updated in the database)
@@ -117,7 +118,10 @@ export const getUserProfileDetails: RequestHandler = async (req, res, next) => {
 
 export const updateUserProfile: RequestHandler = async (req, res, next) => {
   try {
-    logger.verbose(`Getting user info for user with id: ${req.currentUserId}`);
+    logger.verbose(` 👤 Updating user profile: ${req.currentUserId}`);
+
+    // Imitate slow connection
+    // await new Promise((resolve) => setTimeout(resolve, 5000));
 
     // TODO: filter user data to output only relevant fields
     const currentUser = await User.findById(req.currentUserId);
@@ -128,14 +132,21 @@ export const updateUserProfile: RequestHandler = async (req, res, next) => {
     const { firstName, lastName, newEmail, currentPassword, newPassword } =
       req.body;
 
-    console.log(
-      "got data:",
-      firstName,
-      lastName,
-      newEmail,
-      currentPassword,
-      newPassword
-    );
+    console.log(req.body);
+    console.log(req.rawHeaders);
+
+    const file = req.file;
+
+    console.log("👤 Input fields to update: ");
+    console.log("👤 firstName: ", firstName);
+    console.log("👤 lastName: ", lastName);
+    console.log("👤 newEmail: ", newEmail);
+    console.log("👤 currentPassword: ", currentPassword);
+    console.log("👤 newPassword: ", newPassword);
+    console.log("👤 file: ", file);
+    console.log("👤 file (multer): ", req.file);
+
+    // console.log("got file:", file);
 
     // Update user name
     if (firstName) currentUser.firstName = firstName;
@@ -157,6 +168,20 @@ export const updateUserProfile: RequestHandler = async (req, res, next) => {
       currentUser.password = newPassword;
     }
 
+    // Update user profile photo url
+
+    if (file) {
+      const previousPhotoUrl = currentUser.photoUrl;
+
+      currentUser.photoUrl = file.path.split("public")[1];
+
+      // Delete previous profile photo
+
+      if (previousPhotoUrl) removeUploadedFile(`./public${previousPhotoUrl}`);
+
+      // if (previousPhotoUrl) fs.unlink(`./public${previousPhotoUrl}`, () => {});
+    }
+
     await currentUser.save();
 
     // Send response back to client
@@ -167,7 +192,7 @@ export const updateUserProfile: RequestHandler = async (req, res, next) => {
           email: currentUser.email,
           firstName: currentUser.firstName,
           lastName: currentUser.lastName,
-          photo: currentUser.photoUrl,
+          photoUrl: currentUser.photoUrl,
         },
       },
     });
@@ -321,6 +346,9 @@ export const getAllUsers: RequestHandler = async (req, res, next) => {
 
 export const updateUserAccount: RequestHandler = async (req, res, next) => {
   try {
+    console.log("updateUserAccount", req.params.userEmail);
+    console.log("req.body", req.body);
+    console.log("req.headers", req.headers);
     // Get requested updates from request body
     const { isBlocked, planOption: newTokensLimitIncrease } = req.body;
 
@@ -348,6 +376,8 @@ export const updateUserAccount: RequestHandler = async (req, res, next) => {
 
       updates = { ...updates, $inc: { tokensLimit: increaseBy } }; // Atomicly increase limit
     }
+
+    console.log("updates", updates);
 
     // Get back updated user info
     const updatedUser = await User.findOneAndUpdate(

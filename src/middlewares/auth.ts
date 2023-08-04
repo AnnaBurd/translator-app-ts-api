@@ -52,6 +52,7 @@ export const restrictRouteTo = (...roles: Role[]) => {
 
       next();
     } catch (error) {
+      logger.error(`Could not authorize user to route ${req.url}: ${error}`);
       next(error);
     }
   };

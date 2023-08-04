@@ -39,6 +39,9 @@ app.use("/api/users", userRoutes);
 app.use("/api/refresh", refreshAccessRoute);
 app.use("/api/docs", docRoutes);
 
+// Serve static files
+app.use(express.static("public"));
+
 app.all("*", (req: Request, _: Response, next) => {
   next(
     new AppError(

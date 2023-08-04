@@ -10,6 +10,9 @@ import {
   updateUserAccount,
   updateUserProfile,
 } from "../controllers/user.js";
+
+import saveAttachedFile from "../services/filestorage/filestorage.js";
+
 import { signup, signin, signout } from "../controllers/auth.js";
 
 const router = Router();
@@ -24,8 +27,12 @@ router.use(protectRoute);
 router
   .route("/profile")
   .get(getUserProfile)
-  .patch(updateUserProfile)
+  .post(saveAttachedFile, updateUserProfile)
+  // .patch(upload.single("selectedImage"), updateUserProfile)
   .delete(deleteUserProfile);
+
+// router.route("/profile/photo");
+// .post(getSingleFileUpload("photo"), (req, res) => {});
 
 router.route("/profile/details").get(getUserProfileDetails);
 
