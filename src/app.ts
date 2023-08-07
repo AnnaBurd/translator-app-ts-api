@@ -19,6 +19,8 @@ const app = express();
 // Log incoming http requests
 app.use(httpLogger);
 
+// TODO: follow security best practices
+
 // Apply cors policy
 // TODO: Configurations - Temporary confugured as CORS-enabled for all origins
 app.use(

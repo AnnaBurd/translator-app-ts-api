@@ -13,12 +13,20 @@ import {
 
 import saveAttachedFile from "../services/filestorage/filestorage.js";
 
-import { signup, signin, signout } from "../controllers/auth.js";
+import {
+  signup,
+  signin,
+  signout,
+  reset,
+  confirmReset,
+} from "../controllers/auth.js";
 
 const router = Router();
 
 router.post("/signup", signup);
 router.post("/signin", signin);
+router.post("/reset", reset);
+router.post("/confirmReset", confirmReset);
 router.get("/signout", signout);
 
 // For signed in users:

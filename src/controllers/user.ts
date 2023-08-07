@@ -9,6 +9,7 @@ import { getLastSixMonths } from "../utils/date-helper.js";
 import RefreshToken from "../models/RefreshToken.js";
 import { detatchRefreshToken } from "./auth.js";
 import { removeUploadedFile } from "../services/filestorage/filestorage.js";
+import { sendWelcomeEmail } from "../services/emails/email.js";
 
 const getUserUsageStatistics = async (userId: string) => {
   // Get user usage statistics (tokenUsageStats is generated and monthly updated in the database)
@@ -392,6 +393,14 @@ export const updateUserAccount: RequestHandler = async (req, res, next) => {
         AppErrorName.ResourceNotFoundError,
         "Trying to update not existing user"
       );
+
+    // Notify user about account update
+    if (
+      updatedUser.tokensLimit > 0 &&
+      updatedUser.tokensLimit === updates.$inc.tokensLimit &&
+      !updatedUser.isBlocked
+    )
+      sendWelcomeEmail(updatedUser.email);
 
     // Send updated fields back to client
     res.status(200).json({

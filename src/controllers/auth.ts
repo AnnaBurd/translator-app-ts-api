@@ -9,6 +9,15 @@ import logger from "../utils/logger.js";
 import User from "../models/User.js";
 import RefreshToken from "../models/RefreshToken.js";
 
+import crypto from "crypto";
+import bcrypt from "bcrypt";
+import ResetToken from "../models/ResetToken.js";
+import { CLIENT_URL } from "../config.js";
+import {
+  sendNotificationOnNewUser,
+  sendPasswordResetLink,
+} from "../services/emails/email.js";
+
 /* Explanation Notes:
 Authentication is based on usage of refresh and access jwt tokens:
 
@@ -68,6 +77,9 @@ export const signup: RequestHandler = async (req, res, next) => {
       expires: new Date(new Date().getTime() + 86400000 * 15),
     }).save();
 
+    // Notify admin about new user
+    sendNotificationOnNewUser(newUser.email);
+
     // Send auth tokens to user
     attachRefreshToken(refreshTokenValue, res)
       .status(201)
@@ -119,7 +131,7 @@ export const signin: RequestHandler = async (req, res, next) => {
     //   }, 3000);
     // });
 
-    // Send response back to client
+    // Send response back to client, but do not include the token
     attachRefreshToken(refreshTokenValue, res)
       .status(200)
       .json({
@@ -135,6 +147,139 @@ export const signin: RequestHandler = async (req, res, next) => {
       });
   } catch (error) {
     logger.error(`🔥 Could not sign in user (${(error as Error).message})`);
+    next(error);
+  }
+};
+
+export const reset: RequestHandler = async (req, res, next) => {
+  try {
+    // Get user input from request
+    const { email } = req.body;
+    logger.verbose(`Resetting user password:  ${email}`);
+
+    // Validate user input
+    if (!email) {
+      throw new Error(`Provide email to reset`);
+    }
+    const user = await User.findOne({ email, isDeleted: { $ne: true } });
+    if (!user) {
+      throw new Error(`Could not find user with provided email`);
+    }
+
+    console.log("User to reset: ", user);
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    const hashedResetToken = await bcrypt.hash(resetToken, 12);
+
+    console.log("Reset token: ", resetToken);
+    console.log("hashedResetToken token: ", hashedResetToken);
+
+    await new ResetToken({
+      user: user._id,
+      value: hashedResetToken,
+      expires: new Date(new Date().getTime() + 1000 * 60 * 30),
+    }).save();
+
+    // Send email with the reset link and code
+
+    const resetUrl = `${CLIENT_URL}/restore?token=${resetToken}&email=${user.email}`;
+
+    // console.log("resetUrl: ", resetUrl);
+    sendPasswordResetLink(user.email, hashedResetToken, resetUrl);
+
+    // Send response back to client, but do not include the token in the response body
+    res.status(200).json({
+      status: "success",
+      message: "Reset token has been sent to your email address",
+    });
+  } catch (error) {
+    logger.error(`🔥 Could not sign in user (${(error as Error).message})`);
+    next(error);
+  }
+};
+
+export const confirmReset: RequestHandler = async (req, res, next) => {
+  try {
+    // Get user input from request
+
+    console.log("confirm password reset");
+
+    console.log("req.query: ", req.query);
+
+    const { email, token, newPassword } = req.body;
+
+    console.log("email: ", email);
+    console.log("resetToken: ", token);
+    console.log("newPassword: ", newPassword);
+
+    const user = await User.findOne({ email, isDeleted: { $ne: true } });
+    if (!user) throw new Error(`Could not find user with provided email`);
+
+    const resetTokenRecords = await ResetToken.find({ user: user._id })
+      .sort({
+        expires: -1,
+      })
+      .limit(1);
+
+    console.log("resetTokenRecords: ", resetTokenRecords);
+
+    if (!resetTokenRecords) throw new Error(`Could not find reset token`);
+
+    const resetTokenRecord = resetTokenRecords[0];
+
+    console.log("resetTokenRecord to validate: ", resetTokenRecord);
+    console.log("token to validate: ", token);
+    const isValidToken = await bcrypt.compare(
+      token,
+      resetTokenRecord?.value as string
+    );
+
+    if (!isValidToken) {
+      throw new Error("Invalid or expired password reset token");
+    }
+
+    // Update user's password
+
+    if (newPassword) {
+      user.password = newPassword;
+      await user.save();
+
+      // Generate access and refresh jwt tokens
+      const [accessToken, refreshTokenValue] = issueJWTTokens(user);
+
+      await new RefreshToken({
+        user: user,
+        value: refreshTokenValue,
+        expires: new Date(new Date().getTime() + 86400000 * 15),
+      }).save();
+
+      // Send auth tokens to user
+      return attachRefreshToken(refreshTokenValue, res)
+        .status(200)
+        .json({
+          status: "success",
+          data: {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            role: user.role,
+            photoUrl: user.photoUrl,
+          },
+          message: "Password has been reset",
+          accessToken,
+        });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Password reset token is valid",
+    });
+  } catch (error) {
+    logger.error(
+      `🔥 Error confirming password reset token (${(error as Error).message})`
+    );
     next(error);
   }
 };
