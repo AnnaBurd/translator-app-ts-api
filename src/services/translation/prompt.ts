@@ -1,7 +1,6 @@
 import { ChatCompletionRequestMessageRoleEnum as APIRole } from "openai";
 
-// import { getPromptExamples } from "../store/store.js";
-import { getPromptExamples } from "../store/store-local.js";
+import { getPromptExamples } from "../datastore/store-local.js";
 
 import { Block, Language } from "../../models/Doc.js";
 import { APIMessage, EditOption } from "./translation.js";

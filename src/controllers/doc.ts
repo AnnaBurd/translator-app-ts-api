@@ -9,8 +9,6 @@ import logger from "../utils/logger.js";
 import User from "../models/User.js";
 import { AppError, AppErrorName } from "../middlewares/errorHandler.js";
 
-// TODO: restore password functionality, email to user with a link to reset password
-
 // TODO: filter
 // TODO: filter only relevant data
 
@@ -21,19 +19,11 @@ import { AppError, AppErrorName } from "../middlewares/errorHandler.js";
 
 // TODO: tab through all pages and make sure that all outlines are in similar style
 
-// TODO: message admin on user registration, email users when their plans was changed
-
-// TODO: user profile - change email or password
-
 // TODO: refactor code and remove console.logs
 
-// TODO: hosting and githup representation
+// TODO: hosting
 
-// TODO: dynamic module imports to reduce bundle size
-
-// TODO: rename store to datastore service
-
-// TODO: messaging and email service
+// TODO: and githup representation
 
 // TODO: try GPT-4
 

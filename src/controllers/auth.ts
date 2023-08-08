@@ -39,10 +39,18 @@ server -> issue new access token ...
 const REFRESH_TOKEN_NAME = "translator-app-refresh-token";
 
 const attachRefreshToken = (value: string, res: Response) => {
+  // Development mode
+  // res.cookie(REFRESH_TOKEN_NAME, value, {
+  //   maxAge: 10 * 24 * 60 * 60 * 1000, // How long refresh token lasts (10 days)
+  //   secure: false,
+  //   httpOnly: true,
+  // });
+
+  // Production mode
   res.cookie(REFRESH_TOKEN_NAME, value, {
-    maxAge: 24 * 60 * 60 * 1000, // TODO: set up to 15 days
-    // sameSite: "none", // TODO: fix for prod
-    secure: false, // TODO: set secure for https connections
+    maxAge: 10 * 24 * 60 * 60 * 1000,
+    sameSite: "none",
+    secure: true,
     httpOnly: true,
   });
 

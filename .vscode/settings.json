@@ -1,0 +1,4 @@
+{
+  "appService.defaultWebAppToDeploy": "/subscriptions/6713bc97-fb9c-407b-981c-339206614193/resourceGroups/translator-api-2-rg/providers/Microsoft.Web/sites/translator-api-2",
+  "appService.deploySubpath": "."
+}
