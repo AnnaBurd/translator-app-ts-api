@@ -1,0 +1,9 @@
+node_modules
+npm-debug.log
+logs
+.azure
+.vscode
+src
+tsconfig.json
+nodemon.json
+.md
