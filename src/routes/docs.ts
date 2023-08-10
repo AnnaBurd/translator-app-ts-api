@@ -2,21 +2,21 @@ import { Router } from "express";
 import { protectRoute } from "../middlewares/auth.js";
 import {
   createNewDocument,
-  readUserDocument,
-  getUserDocuments,
+  getUserDocument,
   deleteUserDocument,
   editUserDocument,
-} from "../controllers/doc.js";
+  getUserDocumentsPreviews,
+} from "../controllers/doc/doc.js";
 
 const router = Router();
 
 // For signed in users:
 router.use(protectRoute);
 
-router.route("/").get(getUserDocuments).post(createNewDocument);
+router.route("/").get(getUserDocumentsPreviews).post(createNewDocument);
 router
   .route("/:docSlug")
-  .get(readUserDocument)
+  .get(getUserDocument)
   .patch(editUserDocument)
   .delete(deleteUserDocument);
 

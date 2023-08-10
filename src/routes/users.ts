@@ -19,7 +19,7 @@ import {
   signout,
   reset,
   confirmReset,
-} from "../controllers/auth.js";
+} from "../controllers/auth/auth.js";
 
 const router = Router();
 

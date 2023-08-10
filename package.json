@@ -9,13 +9,11 @@
     "build": "rimraf ./build && tsc",
     "dev": "npx tsx watch src/server.ts",
     "load-data": "npx tsx src/services/store/_loader-word-docs.ts",
-    "load-test": "npx tsx src/services/store/_loader-test.ts",
-    "send-mail-test": "npx tsx src/services/emails/email.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "load-test": "npx tsx src/services/store/_loader-test.ts"
   },
-  "author": "",
+  "author": "Anna Burdanova",
   "license": "ISC",
-  "description": "",
+  "description": "Backend for tthe Translator App",
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
     "@types/cookie-parser": "^1.4.3",

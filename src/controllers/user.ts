@@ -7,7 +7,7 @@ import Doc from "../models/Doc.js";
 import { AppError, AppErrorName } from "../middlewares/errorHandler.js";
 import { getLastSixMonths } from "../utils/date-helper.js";
 import RefreshToken from "../models/RefreshToken.js";
-import { detatchRefreshToken } from "./auth.js";
+import { detatchRefreshToken } from "./auth/auth.js";
 import { removeUploadedFile } from "../services/filestorage/filestorage.js";
 import { sendWelcomeEmail } from "../services/emails/email.js";
 
