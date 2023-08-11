@@ -45,7 +45,7 @@
     "jszip": "^3.10.1",
     "langchain": "^0.0.102",
     "mammoth": "^1.6.0",
-    "mongoose": "^7.1.1",
+    "mongoose": "^7.3.4",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.4",
