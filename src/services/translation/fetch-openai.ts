@@ -26,6 +26,7 @@ export const fetchAPIResponse = async (
     });
 
   const onBackOffRetry = (e: any, attemptNumber: number) => {
+    logger.error(`🧌🌋  Error Fetching data from Open AI API: ${e.message}`);
     if (
       !e.message.includes("429") &&
       !e.message.includes("503") &&

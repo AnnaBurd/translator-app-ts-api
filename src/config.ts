@@ -16,8 +16,6 @@ export const NOTIFICATIONS_EMAIL = process.env.NOTIFICATIONS_EMAIL;
 
 export const AI_KEY = process.env.AI_KEY;
 
-export const MAX_INPUT_LENGTH = process.env.MAX_INPUT_LENGTH;
-
 export const REFRESH_TOKEN_TOP_SECRET = process.env.REFRESH_TOKEN_TOP_SECRET;
 export const ACCESS_TOKEN_TOP_SECRET = process.env.ACCESS_TOKEN_TOP_SECRET;
 export const REFRESH_TOKEN_NAME = process.env.REFRESH_TOKEN_NAME;
@@ -27,6 +25,14 @@ export const ACCESS_TOKEN_EXPIRES_IN = process.env.ACCESS_TOKEN_EXPIRES_IN;
 export const LOG_LEVEL = process.env.LOG_LEVEL;
 export const FILE_LOG_LEVEL = process.env.FILE_LOG_LEVEL;
 export const FILE_LOG_PATH = process.env.FILE_LOG_PATH;
+
+export const rawData =
+  process.env.RAW_SAMPLES_PATH || "./data/sample_translation_data.csv";
+export const sampleData =
+  process.env.VERIFIED_SAMPLES_PATH ||
+  "./data/sample_translation_data_checked.csv";
+export const storePath =
+  process.env.VECTOR_DATA_STORE_PATH || "./data/vector_store_local";
 
 // console.log("Loaded environment variables: ");
 // console.log("NODE_ENV: ", NODE_ENV);

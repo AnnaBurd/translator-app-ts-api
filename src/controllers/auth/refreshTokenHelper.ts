@@ -4,7 +4,7 @@ import {
   REFRESH_TOKEN_EXPIRES_IN,
   NODE_ENV,
 } from "../../config.js";
-import { IUser, IUserMethods, UserModel } from "../../models/User.js";
+import { IUser, IUserMethods } from "../../models/User.js";
 import RefreshToken from "../../models/RefreshToken.js";
 import { Document, Types } from "mongoose";
 

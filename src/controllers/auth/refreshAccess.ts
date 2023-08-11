@@ -1,8 +1,5 @@
 import { RequestHandler } from "express";
-import {
-  issueAccessTokenById,
-  verifyRefreshToken,
-} from "../../middlewares/authTokenHandler.js";
+import { issueAccessTokenById, verifyRefreshToken } from "./tokenHelper.js";
 import {
   detatchRefreshToken,
   verifyRefreshTokenExists,

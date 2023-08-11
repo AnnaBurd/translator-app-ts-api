@@ -3,10 +3,9 @@ import { CSVLoader } from "langchain/document_loaders/fs/csv";
 import { FaissStore } from "langchain/vectorstores/faiss";
 import { embeddings } from "./embeddings-local.js";
 
-import { sampleData, storePath } from "./config.js";
-
 import logger from "../../utils/logger.js";
 import { Language } from "../../models/Doc.js";
+import { sampleData, storePath } from "../../config.js";
 
 logger.info("📖 Loading csv dataset of sample translations");
 const loaderRu = new CSVLoader(sampleData, Language.Ru);
@@ -40,7 +39,7 @@ try {
   }
 
   if (storeAlreadyExists) {
-    logger.info(`📖 Loading vector store from ${storePath}`);
+    logger.info(`📖 Loading existing vector store from ${storePath}`);
     vectorStoreVn = await FaissStore.load(`${storePath}/vn`, embeddings);
     vectorStoreRu = await FaissStore.load(`${storePath}/ru`, embeddings);
   }
@@ -54,9 +53,9 @@ const getPromptExamples = async (
   translationLanguage = Language.Ru,
   maxLenght = 2000
 ) => {
-  logger.verbose(
-    `📖🔍 Local vector store - similarity search: ${prompt} (${originalLanguage} - ${translationLanguage})`
-  );
+  // logger.verbose(
+  //   `📖🔍 Local vector store - similarity search: ${prompt} (${originalLanguage} - ${translationLanguage})`
+  // );
 
   if (
     !(

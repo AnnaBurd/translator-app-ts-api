@@ -3,7 +3,7 @@ import { CSVLoader } from "langchain/document_loaders/fs/csv";
 import { FaissStore } from "langchain/vectorstores/faiss";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 
-import { sampleData } from "./config.js";
+import { sampleData } from "../../config.js";
 
 import logger from "../../utils/logger.js";
 import { Language } from "../../models/Doc.js";

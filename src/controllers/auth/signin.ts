@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { issueJWTTokens } from "../../middlewares/authTokenHandler.js";
+import { issueJWTTokens } from "./tokenHelper.js";
 import { attachRefreshToken, saveRefreshToken } from "./refreshTokenHelper.js";
 import User from "../../models/User.js";
 import logger from "../../utils/logger.js";

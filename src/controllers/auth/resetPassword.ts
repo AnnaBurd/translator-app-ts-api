@@ -1,13 +1,14 @@
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { RequestHandler } from "express";
-import { issueJWTTokens } from "../../middlewares/authTokenHandler.js";
+
 import { attachRefreshToken, saveRefreshToken } from "./refreshTokenHelper.js";
 import User from "../../models/User.js";
 import logger from "../../utils/logger.js";
 import ResetToken from "../../models/ResetToken.js";
 import { sendPasswordResetLink } from "../../services/emails/email.js";
 import { CLIENT_URL } from "../../config.js";
+import { issueJWTTokens } from "./tokenHelper.js";
 
 /* Handle generation and delivery of password reset token / url  */
 export const reset: RequestHandler = async (req, res, next) => {

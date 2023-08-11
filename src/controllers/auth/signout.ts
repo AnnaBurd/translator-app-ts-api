@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { verifyRefreshToken } from "../../middlewares/authTokenHandler.js";
+import { verifyRefreshToken } from "./tokenHelper.js";
 import { detatchRefreshToken } from "./refreshTokenHelper.js";
 import RefreshToken from "../../models/RefreshToken.js";
 import logger from "../../utils/logger.js";

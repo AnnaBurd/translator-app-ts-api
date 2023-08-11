@@ -1,5 +1,4 @@
 import { Schema, model } from "mongoose";
-import { TranslationBlock } from "./Translation.js";
 import { APIMessage } from "../services/translation/translation.js";
 import { IUser } from "./User.js";
 import slugify from "../utils/slugify.js";
@@ -16,7 +15,10 @@ export interface Block {
   text: string;
 }
 
-// TODO: generate unique per user documents slugs for a nicer url
+export interface TranslationBlock extends Block {
+  editedManually?: boolean;
+}
+
 export interface IDoc {
   owner: IUser;
   title: string;
@@ -31,8 +33,6 @@ export interface IDoc {
   changedAt: Date;
   deleted: boolean;
 }
-
-// docs: [{ type: Schema.Types.ObjectId, ref: "Doc" }],
 
 const schema = new Schema<IDoc>({
   owner: {
@@ -101,14 +101,16 @@ schema.pre("save", async function (next) {
   return next();
 });
 
+// Make sure document has a title
+schema.pre("save", async function (next) {
+  if (this.title && this.title.length !== 0) return next();
+  this.title = "Untitled document";
+  return next();
+});
+
 // Generate unique slugs for new docs
 schema.pre("save", async function (next) {
-  // console.log("Pre save doc", this);
   if (this.slug) return next(); // Slug is already created
-
-  // New document without slug:
-
-  // console.log("Generating slug for new document...");
 
   const generatedSlug = slugify(this.title, {
     lower: true,
@@ -119,7 +121,7 @@ schema.pre("save", async function (next) {
   // Check if slug is unique by searching for the same slug it the database?
   // Ney - instead attach randomly generated string to the slug
   // In rare cases it will be the same as another slug, and the db will respond in error
-  const randomString = makeid(5);
+  const randomString = makeid(6);
   this.slug = generatedSlug + "-" + randomString;
   console.log(this, generatedSlug);
 

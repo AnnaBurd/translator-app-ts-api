@@ -1,7 +1,8 @@
 import { RequestHandler } from "express";
 import User, { IUser, Role } from "../models/User.js";
-import { verifyAccessToken } from "./authTokenHandler.js";
+
 import logger from "../utils/logger.js";
+import { verifyAccessToken } from "../controllers/auth/tokenHelper.js";
 
 // Globally extend Express TS Request interface with "currentUser" property
 declare module "express-serve-static-core" {

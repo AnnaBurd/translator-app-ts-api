@@ -15,7 +15,7 @@ const schema = new Schema<IResetToken>({
 });
 
 schema.index({ user: 1 });
-// Note: Special Mongo DB TTL index should automatically remove expired tokens
+// Note: Mongo DB TTL index should automatically remove expired tokens
 schema.index({ expires: -1 }, { expireAfterSeconds: 0 });
 
 const ResetToken = model<IResetToken>("ResetToken", schema);

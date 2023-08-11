@@ -10,4 +10,5 @@ export const modelSettings = {
 export const promptSettings = {
   maxPromptLength: 6000,
   minExamplesLength: 3000,
+  maxInputLength: 3000,
 };

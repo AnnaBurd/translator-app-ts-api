@@ -1,6 +1,6 @@
 import { ChatCompletionRequestMessageRoleEnum as APIRole } from "openai";
-import { Block, Language } from "../../models/Doc.js";
-import { TranslationBlock } from "../../models/Translation.js";
+import { Block, Language, TranslationBlock } from "../../models/Doc.js";
+
 import { generatePrompt } from "./prompt.js";
 
 import queue from "./queue.js";

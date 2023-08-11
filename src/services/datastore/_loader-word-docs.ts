@@ -1,6 +1,6 @@
 import { DocxLoader } from "langchain/document_loaders/fs/docx";
 
-import { rawData } from "./config.js";
+import { rawData } from "../../config.js";
 import { deleteFileIfExists, writeToExistingOrCreateFile } from "./utils.js";
 import { Language } from "../../models/Doc.js";
 

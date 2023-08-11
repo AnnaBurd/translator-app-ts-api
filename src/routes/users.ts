@@ -1,15 +1,15 @@
 import { Router } from "express";
-import { protectRoute, restrictRouteTo } from "../middlewares/auth.js";
 import { Role } from "../models/User.js";
+import { protectRoute, restrictRouteTo } from "../middlewares/auth.js";
 import {
   deleteUserProfile,
-  getAllUsers,
-  getAllUsersStats,
+  getAllUserAccounts,
+  getAllUserAccountsUsageStats,
   getUserProfile,
   getUserProfileDetails,
-  updateUserAccount,
+  manageUserAccount,
   updateUserProfile,
-} from "../controllers/user.js";
+} from "../controllers/user/user.js";
 
 import saveAttachedFile from "../services/filestorage/filestorage.js";
 
@@ -36,19 +36,14 @@ router
   .route("/profile")
   .get(getUserProfile)
   .post(saveAttachedFile, updateUserProfile)
-  // .patch(upload.single("selectedImage"), updateUserProfile)
   .delete(deleteUserProfile);
-
-// router.route("/profile/photo");
-// .post(getSingleFileUpload("photo"), (req, res) => {});
 
 router.route("/profile/details").get(getUserProfileDetails);
 
 // For admins:
 router.use(restrictRouteTo(Role.Admin));
-router.get("/", getAllUsers);
-router.get("/usagestatistics", getAllUsersStats);
-router.patch("/:userEmail", updateUserAccount);
-router.delete("/:userid"); // TODO:
+router.get("/", getAllUserAccounts);
+router.get("/usagestatistics", getAllUserAccountsUsageStats);
+router.patch("/:userEmail", manageUserAccount);
 
 export default router;
