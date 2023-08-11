@@ -34,6 +34,10 @@ export const sampleData =
 export const storePath =
   process.env.VECTOR_DATA_STORE_PATH || "./data/vector_store_local";
 
+export const STORAGE_ACCOUNT_NAME = process.env.STORAGE_ACCOUNT_NAME;
+export const STORAGE_CONNECTION_STRING = process.env.STORAGE_CONNECTION_STRING;
+export const STORAGE_CONTAINER_NAME = process.env.STORAGE_CONTAINER_NAME;
+
 // console.log("Loaded environment variables: ");
 // console.log("NODE_ENV: ", NODE_ENV);
 // console.log("PORT: ", PORT);
