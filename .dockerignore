@@ -3,7 +3,9 @@ npm-debug.log
 logs
 .azure
 .vscode
-src
 tsconfig.json
 nodemon.json
 .md
+
+src
+!/src/services/emails/templates/*

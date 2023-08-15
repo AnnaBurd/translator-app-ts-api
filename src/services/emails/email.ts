@@ -10,6 +10,7 @@ import {
   NOTIFICATIONS_EMAIL,
 } from "../../config.js";
 
+const templatesPath = "./src/services/emails/templates";
 // Initialize nodemailer
 var transporter = nodemailer.createTransport({
   service: "gmail",
@@ -38,7 +39,7 @@ export async function sendWelcomeEmail(email: string) {
 
   try {
     const compiledTemplate = await compileTemplate(
-      "./src/services/emails/templates/welcome.hbs",
+      `${templatesPath}/welcome.hbs`,
       {
         url,
       }
@@ -65,11 +66,11 @@ export async function sendWelcomeEmail(email: string) {
 
 export async function sendNotificationOnNewUser(newUserEmail: string) {
   const subject = "New user";
-  const url = `${CLIENT_URL}/users`;
+  const url = `${CLIENT_URL}users`;
 
   try {
     const compiledTemplate = await compileTemplate(
-      "./src/services/emails/templates/new-user.hbs",
+      `${templatesPath}/new-user.hbs`,
       {
         newEmail: newUserEmail,
         url,
@@ -103,7 +104,7 @@ export async function sendPasswordResetLink(
 
   try {
     const compiledTemplate = await compileTemplate(
-      "./src/services/emails/templates/password-reset.hbs",
+      `${templatesPath}/password-reset.hbs`,
       {
         token: token,
         url,
