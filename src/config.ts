@@ -16,6 +16,11 @@ export const NOTIFICATIONS_EMAIL = process.env.NOTIFICATIONS_EMAIL;
 
 export const AI_KEY = process.env.AI_KEY;
 
+export const AZURE_OPENAI_KEY = process.env.AZURE_OPENAI_KEY;
+export const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT;
+export const AZURE_MODEL_DEPLOYMENT_NAME =
+  process.env.AZURE_MODEL_DEPLOYMENT_NAME;
+
 export const REFRESH_TOKEN_TOP_SECRET = process.env.REFRESH_TOKEN_TOP_SECRET;
 export const ACCESS_TOKEN_TOP_SECRET = process.env.ACCESS_TOKEN_TOP_SECRET;
 export const REFRESH_TOKEN_NAME = process.env.REFRESH_TOKEN_NAME;

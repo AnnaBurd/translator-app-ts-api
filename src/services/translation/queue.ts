@@ -3,11 +3,11 @@ import PQueue from "p-queue";
 // TODO: handle error of queue overgrowth
 
 const queue = new PQueue({
-  concurrency: 1,
+  concurrency: 10,
   timeout: 1000 * 60 * 10, // Wait for response maximum 10 minutes
   throwOnTimeout: true,
-  intervalCap: 3,
-  interval: 1000 * 60, // 3 RPM for free Open AI Plan // Note that using Open AI embeddings increases number of requests, so when using Open Ai insted of local vector store interval should be increased as well
+  intervalCap: 20,
+  interval: 1000 * 60, // ~20 RPM
 });
 
 let count = 0;

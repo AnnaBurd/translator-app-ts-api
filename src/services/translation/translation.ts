@@ -5,9 +5,9 @@ import { generatePrompt } from "./prompt.js";
 
 import queue from "./queue.js";
 import { AppError, AppErrorName } from "../../middlewares/errorHandler.js";
-import { fetchAPIResponse } from "./fetch-openai.js";
+// import { fetchAPIResponse } from "./fetch-openai.js";
+import { fetchAPIResponse } from "./fetch-azure.js";
 import logger from "../../utils/logger.js";
-import { type } from "os";
 
 export interface APIMessage {
   role: APIRole;
@@ -34,7 +34,7 @@ export const translateBlockContent = async (
   }
 ): Promise<[TranslationBlock, Array<APIMessage>]> => {
   logger.verbose(
-    `💬 New translation task (${type}): ${block.blockId} - ${block.text}`
+    `💬 New translation task (${options?.type}): ${block.blockId} - ${block.text}`
   );
 
   if (block.text.length > 2500) {
@@ -48,6 +48,7 @@ export const translateBlockContent = async (
   const [prompt, newMessages] = await generatePrompt(block, history, options);
 
   // Queue the request to OpenAI API (to avoid rate limit errors)
+  // const apiResponse = await queue.add(() => fetchAPIResponse(prompt));
   const apiResponse = await queue.add(() => fetchAPIResponse(prompt));
 
   if (!apiResponse)
