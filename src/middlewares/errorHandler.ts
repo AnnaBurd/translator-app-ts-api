@@ -60,3 +60,9 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   // Limit number of sign up attempts per IP.. (recapcha?) TODO:
   //
 };
+
+// TODO: fix all data and error messages that application returns - make sure that no sensitive data slips out
+
+// TODO: tab through all pages and make sure that all outlines are in similar style
+
+// TODO: allow to store documents in local storage (ask for permission in upload form
