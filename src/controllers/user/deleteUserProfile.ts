@@ -8,6 +8,39 @@ import { detatchRefreshToken } from "../auth/auth.js";
 /* Handle user deleting own profile 
 Note: this is a soft delete, user data is not removed from the database, but isDeleted flag is set to true
 */
+/**
+ * @swagger
+ * /api/users/profile:
+ *  delete:
+ *   description: Soft delete of the user profile.
+ *   tags: [User Profile]
+ *   security:
+ *   - bearerAuth: []
+ *   requestBody:
+ *    required: true
+ *    content:
+ *      application/json:
+ *       schema:
+ *        type: object
+ *        properties:
+ *         confirmDelete:
+ *          type: boolean
+ *          example: true
+ *   responses:
+ *    204:
+ *     description: Successfully deleted user account data.
+ *     content:
+ *      application/json:
+ *        schema:
+ *          type: object
+ *          properties:
+ *            status:
+ *              type: string
+ *              example: success
+ *            message:
+ *              type: string
+ *              example: deleted
+ */
 export const deleteUserProfile: RequestHandler = async (req, res, next) => {
   try {
     logger.verbose(`User ${req.currentUserId} is deleting their profile`);
@@ -47,7 +80,7 @@ export const deleteUserProfile: RequestHandler = async (req, res, next) => {
     detatchRefreshToken(res);
 
     // Send response back to client
-    res.status(204).json({ status: "success", data: "deleted" });
+    res.status(204).json({ status: "success", message: "deleted" });
   } catch (error) {
     next(error);
   }

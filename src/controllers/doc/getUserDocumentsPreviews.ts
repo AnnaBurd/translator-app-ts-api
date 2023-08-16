@@ -6,6 +6,54 @@ import { parsePaginationParams } from "../../utils/pagination-helper.js";
 /* Get partial document data for user's documents, 
 paginated with default limit of 10 documents per page, 
 recently changed documents are served on first pages. */
+/**
+ * @swagger
+ * /api/docs:
+ *  get:
+ *   description: Get previews for a number of user's documens.
+ *   tags: [Documents]
+ *   security:
+ *   - bearerAuth: []
+ *   parameters:
+ *    - in: query
+ *      name: page
+ *      description: Page number to return.
+ *      schema:
+ *        type: integer
+ *    - in: query
+ *      name: limit
+ *      description: Number of items per page.
+ *      schema:
+ *        type: integer
+ *   responses:
+ *    200:
+ *     description: Successfully return user's documents previews data.
+ *     content:
+ *      application/json:
+ *        schema:
+ *          type: object
+ *          properties:
+ *            status:
+ *              type: string
+ *              example: success
+ *            currentPage:
+ *              type: integer
+ *              example: 1
+ *            totalPages:
+ *              type: integer
+ *              example: 10
+ *            data:
+ *              type: array
+ *              items:
+ *                type: object
+ *                properties:
+ *                  _id:
+ *                    type: string
+ *                    example: 5f9a2c7b9d1e8e2d1c0f8b9c
+ *                  title:
+ *                    type: string
+ *                    example: New Document
+ */
 export const getUserDocumentsPreviews: RequestHandler = async (
   req,
   res,

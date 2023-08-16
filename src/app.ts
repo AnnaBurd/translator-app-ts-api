@@ -3,6 +3,8 @@ import express, { Request, Response, json } from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
+import swaggerUi from "swagger-ui-express";
+
 import {
   AppError,
   AppErrorName,
@@ -13,6 +15,7 @@ import httpLogger from "./utils/http-logger.js";
 import userRoutes from "./routes/users.js";
 import refreshAccessRoute from "./routes/refresh.js";
 import docRoutes from "./routes/docs.js";
+import { swaggerSpec } from "./docs/docs.js";
 
 const app = express();
 
@@ -43,6 +46,9 @@ app.use("/api/docs", docRoutes);
 
 // Serve static files
 app.use(express.static("public"));
+
+// Serve api documentation
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.all("*", (req: Request, _: Response, next) => {
   next(

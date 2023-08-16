@@ -62,6 +62,83 @@ const collectUserUsageStatistics = async (userId: string) => {
 };
 
 /* Return data about user profile and usage statistics */
+/**
+ * @swagger
+ * /api/users/profile:
+ *  get:
+ *   description: Get data about user profile and usage statistics.
+ *   tags: [User Profile]
+ *   security:
+ *   - bearerAuth: []
+ *   responses:
+ *    200:
+ *     description: Successfully verified user access token and got user profile data.
+ *     content:
+ *      application/json:
+ *        schema:
+ *          type: object
+ *          properties:
+ *            status:
+ *              type: string
+ *              example: success
+ *            data:
+ *              type: object
+ *              properties:
+ *                user:
+ *                  type: object
+ *                  properties:
+ *                    id:
+ *                      type: string
+ *                      example: 5f9d88b7c4b9e7b3a8c3f4a0
+ *                    email:
+ *                      type: string
+ *                      example: example@mail.com
+ *                      format: email
+ *                    firstName:
+ *                      type: string
+ *                      example: John
+ *                    lastName:
+ *                      type: string
+ *                      example: Doe
+ *                    registrationDate:
+ *                      type: string
+ *                      example: 2020-10-30T12:00:00.000Z
+ *                usageStatistics:
+ *                 type: object
+ *                 properties:
+ *                  totalTokens:
+ *                    type: number
+ *                    example: 100
+ *                  tokensUsedMonth:
+ *                    type: number
+ *                    example: 10
+ *                  limit:
+ *                    type: number
+ *                    example: 1000
+ *                  tokensUsageStats:
+ *                    type: array
+ *                    example: [10, 10, 123, 123, 12, 0]
+ *                    items:
+ *                      type: number
+ *                  wordsUsageStats:
+ *                    example: [10, 10, 2, 1, 32, 0]
+ *                    type: array
+ *                  docsUsageStats:
+ *                    example: [10, 41, 2, 1, 12, 0]
+ *                    type: array
+ *                  numOfDocumentsChangedThisMonth:
+ *                    type: number
+ *                    example: 5
+ *                  numberOfWordsTranslatedThisMonth:
+ *                    type: number
+ *                    example: 100
+ *                  lastSixMonths:
+ *                    type: array
+ *                    example: [2020-1-30T12:00:00.000Z, 2020-2-30T12:00:00.000Z, 2020-3-30T12:00:00.000Z, 2020-4-30T12:00:00.000Z, 2020-5-30T12:00:00.000Z, 2020-6-30T12:00:00.000Z]
+ *                    items:
+ *                     type: string
+ *                     description: Date in ISO format
+ */
 export const getUserProfile: RequestHandler = async (req, res, next) => {
   try {
     logger.verbose(

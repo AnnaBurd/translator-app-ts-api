@@ -8,6 +8,45 @@ import User from "../../models/User.js";
 import logger from "../../utils/logger.js";
 
 /* Handle issue of access token using valid refresh token, in addition to refreshing value returns signed in user data.  */
+/**
+ * @swagger
+ * /api/refresh/signin:
+ *  get:
+ *   description: Refresh access token using valid refresh token, in addition to refreshing value returns signed in user data.
+ *   tags: [User Authentication]
+ *   responses:
+ *    200:
+ *     description: Successfully refreshed access token, returns new access token.
+ *     content:
+ *      application/json:
+ *        schema:
+ *          type: object
+ *          properties:
+ *            status:
+ *              type: string
+ *              example: success
+ *            data:
+ *              type: object
+ *              properties:
+ *                firstName:
+ *                  type: string
+ *                  example: Professor
+ *                lastName:
+ *                  type: string
+ *                  example: Limibus
+ *                email:
+ *                  type: string
+ *                  example: example@mail.com
+ *                role:
+ *                  type: string
+ *                  example: User
+ *                photoUrl:
+ *                  type: string
+ *                  example: https://translatorappstorage.blob.core.windows.net/uploads/1692088832803-ai_generated___old_man_jenkins_by_edmodo21_dfhjs8s-pre.jpg
+ *            accessToken:
+ *                type: string
+ *                example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyaWQiOiI2NGRjNzIyYTlkZTc3YzIyODM3Yzg1OGMiLCJpYXQiOjE2OTIxNjg3NDYsImV4cCI6MTY5MjQ2ODc0Nn0.zRHPJSvcNaMdL_YLuWCCzsUczXbA329JVKzMXI13dG8
+ */
 export const silentSignIn: RequestHandler = async (req, res, next) => {
   try {
     // Read data from the attached to the request refresh token cookie (should be attached by the client browser)

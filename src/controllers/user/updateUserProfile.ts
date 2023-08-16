@@ -8,6 +8,73 @@ import {
   uploadBlob,
 } from "../../services/filestorage/azureblob.js";
 
+/**
+ * @swagger
+ * /api/users/profile:
+ *  post:
+ *   description: Update user profile information (email / password / photo / name).
+ *   tags: [User Profile]
+ *   security:
+ *   - bearerAuth: []
+ *   requestBody:
+ *    required: true
+ *    content:
+ *      multipart/form-data:
+ *        schema:
+ *          type: object
+ *          properties:
+ *            firstName:
+ *              type: string
+ *              example: John
+ *            lastName:
+ *              type: string
+ *              example: Doe
+ *            newEmail:
+ *              type: string
+ *              example: newemail@mail.com
+ *              format: email
+ *            currentPassword:
+ *              type: string
+ *              example: password123
+ *              description: required if newPassword is provided
+ *            newPassword:
+ *              type: string
+ *              example: newpassword123
+ *            file:
+ *              type: blob
+ *              description: user profile photo, < 2MB
+ *   responses:
+ *    200:
+ *     description: Successfully updated user profile data.
+ *     content:
+ *      application/json:
+ *        schema:
+ *          type: object
+ *          properties:
+ *            status:
+ *              type: string
+ *              example: success
+ *            data:
+ *              type: object
+ *              properties:
+ *                user:
+ *                  type: object
+ *                  properties:
+ *                    email:
+ *                      type: string
+ *                      example: example@mail.com
+ *                      format: email
+ *                    firstName:
+ *                      type: string
+ *                      example: John
+ *                    lastName:
+ *                      type: string
+ *                      example: Doe
+ *                    photoUrl:
+ *                      type: string
+ *                      example: /img/users/1234567890.jpg
+ */
+
 export const updateUserProfile: RequestHandler = async (req, res, next) => {
   try {
     logger.verbose(

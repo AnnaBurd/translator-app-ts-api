@@ -214,6 +214,64 @@ const handleDeleteBlocks = async (
 };
 
 /* Handle editions of a document - adding new paragraphs, editing existing ones, deleting */
+
+/**
+ * @swagger
+ * /api/docs/{docSlug}:
+ *  patch:
+ *   description: Change document's content by adding new paragraphs, editing existing paragraphs, or deleting paragraphs. <br/> <br/> <b>Important:</b> This endpoint translates content for new/changed blocks, so if the account has no tokens left the update will fail.
+ *   tags: [Documents]
+ *   security:
+ *   - bearerAuth: []
+ *   parameters:
+ *   - in: path
+ *   name: docSlug
+ *   schema:
+ *     type: string
+ *     required: true
+ *     description: Slug of the document, for example, new-document-12sd2
+ *   requestBody:
+ *    required: true
+ *    content:
+ *      application/json:
+ *        schema:
+ *          type: object
+ *          properties:
+ *            editOption:
+ *              enum: [newOriginalBlock, editOriginalBlock, removeBlocks]
+ *            inputBlock:
+ *               type: object
+ *               properties:
+ *                  blockId:
+ *                    type: string
+ *                    example: 5f9a2c7b9d1
+ *                  text:
+ *                    type: string
+ *                    example: This is a new paragraph.
+ *            blockPositionIndex:
+ *              type: number
+ *              example: 2
+ *    responses:
+ *      200:
+ *        description: Successfully updated document's content
+ *        application/json:
+ *          schema:
+ *            type: object
+ *            properties:
+ *              status:
+ *                type: string
+ *                example: success
+ *              data:
+ *                type: object
+ *                properties:
+ *                  _id:
+ *                    type: string
+ *                    example: 5f9a2c7b9d1e8e2d1c0f8b9c
+ *                  title:
+ *                    type: string
+ *                    example: Updated Document
+ */
+
 export const editUserDocument: RequestHandler = async (req, res, next) => {
   try {
     // Get the document from the database

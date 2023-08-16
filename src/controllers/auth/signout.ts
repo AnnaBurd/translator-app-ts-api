@@ -8,6 +8,28 @@ import logger from "../../utils/logger.js";
 
 IMPORTANT: should also delete access token on client side 
 */
+/* Handle sign in of existing users, requires email and password. */
+/**
+ * @swagger
+ * /api/users/signout:
+ *  post:
+ *   description: Sign out user. <br/><br/> _Note - the refresh token is removed by the browser, but **access token is expected to be removed with client-side code**._
+ *   tags: [User Authentication]
+ *   responses:
+ *    204:
+ *     description: Successful sign out, returns success message.
+ *     content:
+ *      application/json:
+ *        schema:
+ *          type: object
+ *          properties:
+ *            status:
+ *              type: string
+ *              example: success
+ *            message:
+ *              type: string
+ *              example: logout
+ */
 export const signout: RequestHandler = async (req, res, next) => {
   try {
     // Verify refresh token

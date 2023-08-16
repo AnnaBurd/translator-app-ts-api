@@ -11,6 +11,38 @@ import { CLIENT_URL } from "../../config.js";
 import { issueJWTTokens } from "./tokenHelper.js";
 
 /* Handle generation and delivery of password reset token / url  */
+/**
+ * @swagger
+ * /api/users/reset:
+ *  post:
+ *   description: Request password reset for user with provided email. Sends password reset link to user's email address.
+ *   tags: [Password Reset]
+ *   requestBody:
+ *     required: true
+ *     content:
+ *      application/json:
+ *        schema:
+ *         type: object
+ *         properties:
+ *          email:
+ *            type: string
+ *            example: example@mail.com
+ *            required: true
+ *   responses:
+ *    200:
+ *     description: Successfully generated reset link and sent to specified email address.
+ *     content:
+ *      application/json:
+ *        schema:
+ *          type: object
+ *          properties:
+ *            status:
+ *              type: string
+ *              example: success
+ *            message:
+ *              type: string
+ *              example: Reset token has been sent to your email address
+ */
 export const reset: RequestHandler = async (req, res, next) => {
   try {
     // Get user input from request
@@ -59,6 +91,67 @@ export const reset: RequestHandler = async (req, res, next) => {
 };
 
 /* Handle reset token verification and, if provided, password change */
+/**
+ * @swagger
+ * /api/users/confirmReset:
+ *  post:
+ *   description: Confirm the validity of the reset token and change password.
+ *   tags: [Password Reset]
+ *   requestBody:
+ *     required: true
+ *     content:
+ *      application/json:
+ *        schema:
+ *         type: object
+ *         properties:
+ *          email:
+ *            type: string
+ *            example: example@mail.com
+ *            required: true
+ *          token:
+ *            type: string
+ *            example: bk18-20020a17090b081200b002680f0f2886sm378458pjb.12
+ *            required: true
+ *          newPassword:
+ *            type: string
+ *            example: 123456789
+ *            required: false
+ *   responses:
+ *    200:
+ *     description: Reset token is valid. If the new password is provided, it is changed and new auth tokens are generated and sent to the client.
+ *     content:
+ *      application/json:
+ *        schema:
+ *          type: object
+ *          properties:
+ *            status:
+ *              type: string
+ *              example: success
+ *            message:
+ *              type: string
+ *              example: Password has been reset
+ *            data:
+ *              type: object
+ *              properties:
+ *                firstName:
+ *                  type: string
+ *                  example: Professor
+ *                lastName:
+ *                  type: string
+ *                  example: Limibus
+ *                email:
+ *                  type: string
+ *                  example: example@mail.com
+ *                role:
+ *                  type: string
+ *                  example: User
+ *                photoUrl:
+ *                  type: string
+ *                  example: https://translatorappstorage.blob.core.windows.net/uploads/1692088832803-ai_generated___old_man_jenkins_by_edmodo21_dfhjs8s-pre.jpg
+ *            accessToken:
+ *                type: string
+ *                example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyaWQiOiI2NGRjNzIyYTlkZTc3YzIyODM3Yzg1OGMiLCJpYXQiOjE2OTIxNjg3NDYsImV4cCI6MTY5MjQ2ODc0Nn0.zRHPJSvcNaMdL_YLuWCCzsUczXbA329JVKzMXI13dG8
+ */
 export const confirmReset: RequestHandler = async (req, res, next) => {
   try {
     // Get user input from request body

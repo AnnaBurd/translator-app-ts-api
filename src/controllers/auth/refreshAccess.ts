@@ -7,6 +7,28 @@ import {
 import logger from "../../utils/logger.js";
 
 /* Handle re-issue of access token using valid refresh token. */
+
+/**
+ * @swagger
+ * /api/refresh:
+ *  get:
+ *   description: Re-issue access token using refresh token. <br/><br/> _Note - the refresh token is expected to be automatically attached to the request by the client browser._
+ *   tags: [User Authentication]
+ *   responses:
+ *    200:
+ *     description: Successfully refreshed access token, returns new access token.
+ *     content:
+ *      application/json:
+ *        schema:
+ *          type: object
+ *          properties:
+ *            status:
+ *              type: string
+ *              example: success
+ *            accessToken:
+ *                type: string
+ *                example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyaWQiOiI2NGRjNzIyYTlkZTc3YzIyODM3Yzg1OGMiLCJpYXQiOjE2OTIxNjg3NDYsImV4cCI6MTY5MjQ2ODc0Nn0.zRHPJSvcNaMdL_YLuWCCzsUczXbA329JVKzMXI13dG8
+ */
 export const refreshAccess: RequestHandler = async (req, res, next) => {
   try {
     // Read data from the attached to the request refresh token cookie (should be attached by the client browser)

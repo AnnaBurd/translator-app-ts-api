@@ -5,6 +5,48 @@ import { AppError, AppErrorName } from "../../middlewares/errorHandler.js";
 import logger from "../../utils/logger.js";
 
 /* Manage user account - block/unblock user, add tokens to user account limit */
+/**
+ * @swagger
+ * /api/users/{userEmail}:
+ *  patch:
+ *   description: Manage user account - block/unblock user or add tokens to user account limit.
+ *   tags: [Administration (for admins only)]
+ *   security:
+ *   - bearerAuth: []
+ *   requestBody:
+ *    required: true
+ *    content:
+ *      application/json:
+ *        schema:
+ *          type: object
+ *          properties:
+ *            isBlocked:
+ *              type: boolean
+ *              example: true
+ *            planOption:
+ *              type: string
+ *              enum: [Standart, Comfort, Premium]
+ *   responses:
+ *    200:
+ *     description: Updated user account data.
+ *     content:
+ *      application/json:
+ *        schema:
+ *          type: object
+ *          properties:
+ *            status:
+ *              type: string
+ *              example: success
+ *            data:
+ *              type: object
+ *              properties:
+ *                isBlocked:
+ *                  type: boolean
+ *                  example: true
+ *                tokensLimit:
+ *                  type: number
+ *                  example: 1000000
+ */
 export const manageUserAccount: RequestHandler = async (req, res, next) => {
   try {
     logger.verbose(
