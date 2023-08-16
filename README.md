@@ -70,11 +70,11 @@ This will run the backend (api) part of the application, the frontend (client) i
 
 ## Usage
 
-[API Reference](https://translator-app-api.azurewebsites.net/api-docs)
+[API Reference](https://app.swaggerhub.com/apis-docs/MANUTA1992_1/translator-app-api/1.0.0)
 
 ## Contributing
 
-1. Fork project (<https://github.com/annaburd/translator-app-ts-front/fork>)
+1. Fork project (<https://github.com/annaburd/translator-app-ts-api/fork>)
 2. Create your feature branch (`git checkout -b feature/fooBar`)
 3. Commit your changes (`git commit -am 'Add some fooBar'`)
 4. Push to the branch (`git push origin feature/fooBar`)
@@ -82,6 +82,6 @@ This will run the backend (api) part of the application, the frontend (client) i
 
 ## Support
 
-<a href="https://github.com/annaburd/translator-app-ts-front/issues">Report Bug</a>
+<a href="https://github.com/annaburd/translator-app-ts-api/issues">Report Bug</a>
 ·
 <a href="https://www.linkedin.com/in/anna-burdanova-b91453218/">Discuss Issues</a>
