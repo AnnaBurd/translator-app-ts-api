@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+logs
+.azure
+.vscode
+tsconfig.json
+nodemon.json
+.md
+
+src
+!/src/services/emails/templates/*

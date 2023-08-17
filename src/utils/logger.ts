@@ -1,19 +1,29 @@
-import * as winston from "winston";
+import { format, createLogger, transports } from "winston";
 
-const fileLogFormat = winston.format.combine(
-  winston.format.timestamp({
+/* Log levels from least (6-Silly) to most (0-Error) important:
+      logger.silly("Silly");
+      logger.debug("Debug");
+      logger.verbose("Verbose");
+      logger.http("Http");
+      logger.info("Info");
+      logger.warn("Warn");
+      logger.error("Error");
+*/
+
+const fileLogFormat = format.combine(
+  format.timestamp({
     format: "YYYY-MM-DD HH:mm:ss",
   }),
-  winston.format.printf(
-    (info) => `${[info.timestamp]} [${info.level}] ${info.message}`
-  )
+  format.printf((info) => `${[info.timestamp]} [${info.level}] ${info.message}`)
 );
 
-const consoleLogFormat = winston.format.combine(
-  winston.format.timestamp({
+const consoleLogFormat = format.combine(
+  format.timestamp({
     format: "HH:mm:ss",
   }),
-  winston.format.printf((info) => {
+  format.printf((info) => {
+    const defaultColor = "\x1b[0m";
+
     let color;
     switch (info.level) {
       case "silly":
@@ -29,33 +39,25 @@ const consoleLogFormat = winston.format.combine(
         color = "\x1b[36m"; // cyan
         break;
       default:
-        color = "\x1b[0m"; // default
+        color = defaultColor; // default
     }
-    return `${[info.timestamp]} ${color}${info.message}${"\x1b[0m"}`;
+
+    return `${[info.timestamp]} ${color}${info.message}${defaultColor}`;
   })
 );
 
-const logger = winston.createLogger({
+const logger = createLogger({
   level: process.env.LOG_LEVEL,
   transports: [
-    new winston.transports.Console({
+    new transports.Console({
       format: consoleLogFormat,
     }),
-    new winston.transports.File({
+    new transports.File({
       filename: "logs/server.log",
       level: process.env.FILE_LOG_LEVEL,
       format: fileLogFormat,
     }),
   ],
 });
-
-// Log levels from least (6-Silly) to most (0-Error) important:
-// logger.silly("Silly");
-// logger.debug("Debug");
-// logger.verbose("Verbose");
-// logger.http("Http");
-// logger.info("Info");
-// logger.warn("Warn");
-// logger.error("Error");
 
 export default logger;

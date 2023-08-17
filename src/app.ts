@@ -1,31 +1,64 @@
-import express, { Express, Request, Response } from "express";
+import express, { Request, Response, json } from "express";
 
-import httpLogger from "./utils/http-logger";
+import cookieParser from "cookie-parser";
+import cors from "cors";
 
-const app: Express = express();
+import swaggerUi from "swagger-ui-express";
 
-// Follow recommended network security practices
-// if (process.env.NODE_ENV === "production") {
-// app.use(cors());
-// app.use(helmet());
-// app.use(rateLimit({ max: 100, windowMs: 30 * 60 * 1000 }));
-// }
+import {
+  AppError,
+  AppErrorName,
+  errorHandler,
+} from "./middlewares/errorHandler.js";
+import httpLogger from "./utils/http-logger.js";
 
-// TODO: check if really needed (after frontend is handled)
-// app.use(mongoSanitize());
-// app.use(xss());
+import userRoutes from "./routes/users.js";
+import refreshAccessRoute from "./routes/refresh.js";
+import docRoutes from "./routes/docs.js";
+import { swaggerSpec } from "./docs/docs.js";
 
+const app = express();
+
+// Log incoming http requests
 app.use(httpLogger);
 
-app.use("/api/v1/docs", (req: Request, res: Response): void => {
-  res.send("Hello world!");
+// TODO: follow security best practices
+
+// Apply cors policy
+// TODO: Configurations - Temporary confugured as CORS-enabled for all origins
+app.use(
+  cors({
+    credentials: true,
+    origin: true,
+  })
+);
+
+// Parse and save request body into req.body
+app.use(json({ limit: "10kb" }));
+
+// Parse and save request cookies into req.cookies
+app.use(cookieParser());
+
+// API Routes
+app.use("/api/users", userRoutes);
+app.use("/api/refresh", refreshAccessRoute);
+app.use("/api/docs", docRoutes);
+
+// Serve static files
+app.use(express.static("public"));
+
+// Serve api documentation
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+app.all("*", (req: Request, _: Response, next) => {
+  next(
+    new AppError(
+      AppErrorName.ResourceNotFoundError,
+      `Can't find resource at: ${req.url}`
+    )
+  );
 });
 
-app.all("*", (req: Request, res: Response): void => {
-  res.status(404).json({
-    status: "fail",
-    message: `Can't find resource at: ${req.url}`,
-  });
-});
+app.use(errorHandler);
 
 export default app;
