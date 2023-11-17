@@ -74,7 +74,7 @@ export const reset: RequestHandler = async (req, res, next) => {
     }).save();
 
     // Send email to user with the reset link and code
-    const resetUrl = `${CLIENT_URL}/restore?token=${resetToken}&email=${user.email}`;
+    const resetUrl = `${CLIENT_URL}restore?token=${resetToken}&email=${user.email}`;
     sendPasswordResetLink(user.email, hashedResetToken, resetUrl);
 
     // Send response back to client, but do not include the token

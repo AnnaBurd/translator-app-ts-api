@@ -100,8 +100,13 @@ export const manageUserAccount: RequestHandler = async (req, res, next) => {
       updatedUser.tokensLimit > 0 &&
       updatedUser.tokensLimit === updates.$inc.tokensLimit &&
       !updatedUser.isBlocked
-    )
-      sendWelcomeEmail(updatedUser.email);
+    ) {
+      // console.log("sendWelcomeEmail -> ", updatedUser);
+
+      const userDoc = await User.findById(updatedUser._id, { email: 1 });
+
+      sendWelcomeEmail(userDoc?.email!);
+    }
 
     // Send updated fields back to client
     res.status(200).json({
