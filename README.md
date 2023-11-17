@@ -56,14 +56,19 @@ npm start       # Run
 Docker:
 
 ```
-# Build docker container
+# Build files
+npm run build
+
+# Build docker image
 docker build -t <any-image-name:tag> .
 
 # Push image to the docker hub
 docker tag <any-image-name:tag> <docker-username>/<any-image-name:tag>
 docker push <docker-username>/<any-image-name:tag>
 
-# When running container, make sure to expose port that is specified in the .env PORT variable
+# Run docker container using image, locally or on hosting
+# When running container, make sure to expose port that is specified in the .env PORT variable, and to update api URL on the frontend side
+
 ```
 
 This will run the backend (api) part of the application, the frontend (client) is [here](https://github.com/AnnaBurd/translator-app-ts-front)
@@ -82,6 +87,6 @@ This will run the backend (api) part of the application, the frontend (client) i
 
 ## Support
 
-<a href="https://github.com/annaburd/translator-app-ts-api/issues">Report Bug</a>
+[Report Bug](https://github.com/annaburd/translator-app-ts-api/issues)
 ·
-<a href="https://www.linkedin.com/in/anna-burdanova-b91453218/">Discuss Issues</a>
+[Discuss Issues](https://www.linkedin.com/in/anna-burdanova-b91453218)
