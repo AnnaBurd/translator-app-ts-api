@@ -51,7 +51,7 @@ export const getAllUserAccountsUsageStats: RequestHandler = async (
   );
   try {
     const totalUsersCount = await User.countDocuments({
-      deleted: { $ne: true },
+      isDeleted: { $ne: true },
     });
     const blockedUsersCount = await User.countDocuments({
       deleted: { $ne: true },
