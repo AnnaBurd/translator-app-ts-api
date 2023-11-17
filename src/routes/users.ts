@@ -26,7 +26,7 @@ const router = Router();
 router.post("/signup", signup);
 router.post("/signin", signin);
 router.post("/reset", reset);
-router.post("/confirmReset", confirmReset);
+router.post("/confirm-reset", confirmReset);
 router.get("/signout", signout);
 
 // For signed in users:

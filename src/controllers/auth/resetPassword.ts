@@ -93,7 +93,7 @@ export const reset: RequestHandler = async (req, res, next) => {
 /* Handle reset token verification and, if provided, password change */
 /**
  * @swagger
- * /api/users/confirmReset:
+ * /api/users/confirm-reset:
  *  post:
  *   description: Confirm the validity of the reset token and change password.
  *   tags: [Password Reset]
