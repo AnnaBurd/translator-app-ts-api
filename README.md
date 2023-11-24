@@ -34,7 +34,7 @@ To address this issue, we have developed an AI-powered application designed spec
 
 ## Roadmap
 
-- [x] Update samples dataset (in progress ...)
+- [x] Update samples dataset (complete, add new data as required)
 - [ ] Tests Coverage
 - [ ] Allow to edit AI-generated translations and include edited versions into prompts as user-provided samples
 - [ ] Calculate spendings in USD and allow to set hard and soft limits

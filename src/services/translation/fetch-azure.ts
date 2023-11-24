@@ -30,22 +30,26 @@ const openaiClient = new OpenAIClient(
 const deploymentId = AZURE_MODEL_DEPLOYMENT_NAME as string;
 
 export const fetchAPIResponse = async (
-  prompt: Array<APIMessage>
+  prompt: Array<APIMessage>,
+  options?: { maxTokens?: number }
 ): Promise<[string, CreateCompletionResponseUsage]> => {
   let response;
 
   logger.verbose("🧌  Fetching data from AZURE API");
 
   const fetchAPIResponse = () =>
-    openaiClient.getChatCompletions(deploymentId, prompt, modelSettings);
+    openaiClient.getChatCompletions(deploymentId, prompt, {
+      ...modelSettings,
+      ...options,
+    });
 
   const onBackOffRetry = (e: any, attemptNumber: number) => {
     logger.error(`🧌🌋  Error Fetching data from Open AI API: ${e.message}`);
     if (
-      !e.message.includes("429") &&
-      !e.message.includes("503") &&
-      !e.message.includes("404") &&
-      !e.message.includes("502")
+      !e?.message?.includes("429") &&
+      !e?.message?.includes("503") &&
+      !e?.message?.includes("404") &&
+      !e?.message?.includes("502")
     )
       return false;
 
@@ -66,7 +70,9 @@ export const fetchAPIResponse = async (
 
   try {
     response = await backOff<ChatCompletions>(fetchAPIResponse, backOffOptions);
-    console.log("GOT RESPONSE FROM AZURE MODEL", response);
+    logger.verbose(
+      `🧌  Fetching data from AZURE API - got response: ${response.id}, finish Reason: ${response.choices[0].finishReason}`
+    );
   } catch (error) {
     console.log(error);
 

@@ -137,3 +137,5 @@ build/
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+src/services/datastore/dataset/examples.ts
+src/services/datastore/dataset/_data-sources-list.ts

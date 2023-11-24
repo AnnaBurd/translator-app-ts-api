@@ -53,9 +53,9 @@ const getPromptExamples = async (
   translationLanguage = Language.Ru,
   maxLenght = 2000
 ) => {
-  // logger.verbose(
-  //   `📖🔍 Local vector store - similarity search: ${prompt} (${originalLanguage} - ${translationLanguage})`
-  // );
+  logger.verbose(
+    `📖🔍 Local vector store - similarity search for:\n\t • ${prompt} (${originalLanguage} - ${translationLanguage})`
+  );
 
   if (
     !(
@@ -69,10 +69,13 @@ const getPromptExamples = async (
     originalLanguage === Language.Vn ? vectorStoreVn : vectorStoreRu;
   const translations = translationLanguage === Language.Vn ? docsVn : docsRu;
 
-  const similarSentenses = await store.similaritySearch(prompt, 5);
+  const similarSentenses = await store.similaritySearch(prompt, 8);
+
+  logger.verbose(`📖🔍 Local vector store - similarity search results:
+  \t • ${similarSentenses.map((doc) => doc.pageContent).join("\n\t • ")}`);
 
   if (!similarSentenses) {
-    logger.verbose("📖🔍 Local vector store - no similar results");
+    logger.warn("📖🔍 Local vector store - no similar results");
     return [];
   }
 
