@@ -74,7 +74,7 @@ export const reset: RequestHandler = async (req, res, next) => {
     }).save();
 
     // Send email to user with the reset link and code
-    const resetUrl = `${CLIENT_URL}/restore?token=${resetToken}&email=${user.email}`;
+    const resetUrl = `${CLIENT_URL}restore?token=${resetToken}&email=${user.email}`;
     sendPasswordResetLink(user.email, hashedResetToken, resetUrl);
 
     // Send response back to client, but do not include the token
@@ -93,7 +93,7 @@ export const reset: RequestHandler = async (req, res, next) => {
 /* Handle reset token verification and, if provided, password change */
 /**
  * @swagger
- * /api/users/confirmReset:
+ * /api/users/confirm-reset:
  *  post:
  *   description: Confirm the validity of the reset token and change password.
  *   tags: [Password Reset]

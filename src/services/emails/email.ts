@@ -35,7 +35,9 @@ async function compileTemplate(
 
 export async function sendWelcomeEmail(email: string) {
   const subject = "Welcome to the Translator App!";
-  const url = `${CLIENT_URL}/dashboard`;
+  const url = `${CLIENT_URL}dashboard`;
+
+  console.log("📨 Mail service: sendWelcomeEmail to ", email);
 
   try {
     const compiledTemplate = await compileTemplate(
@@ -54,19 +56,24 @@ export async function sendWelcomeEmail(email: string) {
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.error("Error sending email:", error);
+        console.error(
+          "📨 Mail service: Error sending email (welcome new user):",
+          error
+        );
       } else {
-        console.log("Email sent successfully!", info.response);
+        console.log("📨 Mail service: Email sent successfully!", info.response);
       }
     });
   } catch (error) {
-    console.error("Error compiling mail template:", error);
+    console.error("📨 Mail service: Error compiling mail template:", error);
   }
 }
 
 export async function sendNotificationOnNewUser(newUserEmail: string) {
   const subject = "New user";
   const url = `${CLIENT_URL}users`;
+
+  console.log("📨 Mail service: sendNotificationOnNewUser", newUserEmail);
 
   try {
     const compiledTemplate = await compileTemplate(
@@ -86,13 +93,16 @@ export async function sendNotificationOnNewUser(newUserEmail: string) {
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.error("Error sending email:", error);
+        console.error(
+          "📨 Mail service: Error sending email (notification on new user):",
+          error
+        );
       } else {
-        console.log("Email sent successfully!", info.response);
+        console.log("📨 Mail service: Email sent successfully!", info.response);
       }
     });
   } catch (error) {
-    console.error("Error compiling mail template:", error);
+    console.error("📨 Mail service: Error compiling mail template:", error);
   }
 }
 export async function sendPasswordResetLink(
@@ -102,11 +112,13 @@ export async function sendPasswordResetLink(
 ) {
   const subject = "Password reset for Translator App";
 
+  console.log("📨 Mail service: sendPasswordResetLink");
+
   try {
     const compiledTemplate = await compileTemplate(
       `${templatesPath}/password-reset.hbs`,
       {
-        token: token,
+        token,
         url,
       }
     );
@@ -120,12 +132,15 @@ export async function sendPasswordResetLink(
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.error("Error sending email:", error);
+        console.error(
+          "📨 Mail service: Error sending email (password reset url):",
+          error
+        );
       } else {
-        console.log("Email sent successfully!", info.response);
+        console.log("📨 Mail service: Email sent successfully!", info.response);
       }
     });
   } catch (error) {
-    console.error("Error compiling mail template:", error);
+    console.error("📨 Mail service: Error compiling mail template:", error);
   }
 }

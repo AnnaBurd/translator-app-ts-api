@@ -81,12 +81,16 @@ export const manageUserAccount: RequestHandler = async (req, res, next) => {
       updates = { ...updates, $inc: { tokensLimit: increaseBy } }; // Atomicly increase limit
     }
 
+    // console.log("🤔 updates", updates);
+
     // Save changes to database and get back updated values
     const updatedUser = await User.findOneAndUpdate(
       { email: req.params.userEmail },
       updates,
       { fields: { isBlocked: 1, tokensLimit: 1 }, new: true } // Return only updated fields,
     );
+
+    // console.log("🤔 updates -> after mongodb", updatedUser);
 
     // Make sure update was successful
     if (!updatedUser)
@@ -97,11 +101,16 @@ export const manageUserAccount: RequestHandler = async (req, res, next) => {
 
     // Welcome users with newly activated accounts - accounts where tokens limits were increased for the first time
     if (
-      updatedUser.tokensLimit > 0 &&
-      updatedUser.tokensLimit === updates.$inc.tokensLimit &&
+      updatedUser?.tokensLimit > 0 &&
+      updatedUser?.tokensLimit === updates?.$inc?.tokensLimit &&
       !updatedUser.isBlocked
-    )
-      sendWelcomeEmail(updatedUser.email);
+    ) {
+      // console.log("sendWelcomeEmail -> ", updatedUser);
+
+      const userDoc = await User.findById(updatedUser._id, { email: 1 });
+
+      sendWelcomeEmail(userDoc?.email!);
+    }
 
     // Send updated fields back to client
     res.status(200).json({

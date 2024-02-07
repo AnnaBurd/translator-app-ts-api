@@ -8,8 +8,7 @@
     "start": "node build/server.js",
     "build": "rimraf ./build && tsc",
     "dev": "npx tsx watch src/server.ts",
-    "load-data": "npx tsx src/services/store/_loader-word-docs.ts",
-    "load-test": "npx tsx src/services/store/_loader-test.ts"
+    "load-data": "npx tsx ./src/services/datastore/dataset/_loader-word-docs.ts"
   },
   "author": "Anna Burdanova",
   "license": "ISC",

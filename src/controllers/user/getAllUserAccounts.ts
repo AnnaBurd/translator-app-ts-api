@@ -69,7 +69,7 @@ export const getAllUserAccounts: RequestHandler = async (req, res, next) => {
 
   try {
     const users = await User.find(
-      { deleted: { $ne: true } },
+      { isDeleted: { $ne: true } },
       {
         firstName: 1,
         lastName: 1,
