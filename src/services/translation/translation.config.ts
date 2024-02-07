@@ -1,6 +1,6 @@
 export const modelSettings = {
   model: "gpt-35-turbo",
-  temperature: 0.35,
+  temperature: 0.4,
   top_p: 0.95,
   frequency_penalty: 0.0,
   presence_penalty: 0.0,

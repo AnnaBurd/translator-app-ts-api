@@ -10,6 +10,7 @@ lerna-debug.log*
 # Data sources
 data/
 public/uploads/
+src/services/datastore/dataset/*
 
 # Deployment details
 .azure/

@@ -9,6 +9,8 @@ import { AppError, AppErrorName } from "../../middlewares/errorHandler.js";
 import { fetchAPIResponse } from "./fetch-azure.js";
 import logger from "../../utils/logger.js";
 
+const NUM_OF_TRANSLATION_ATTEMPTS = 10;
+
 export interface APIMessage {
   role: APIRole;
   content: string;
@@ -55,7 +57,10 @@ export const translateBlockContent = async (
   const maxTokens = Math.max(Math.round((block.text.length / 4) * 4), 100);
   const [prompt, newMessages] = await generatePrompt(block, history, options);
 
-  console.log("💬 Generated prompt (series of messages):", prompt);
+  console.log(
+    "💬 Generated context-aware prompt (series of messages):",
+    prompt
+  );
 
   // Queue the request to OpenAI API (to avoid rate limit errors)
   const apiResponse = await queue.add(() =>
@@ -75,16 +80,29 @@ export const translateBlockContent = async (
 
   // Make sure the translated text is not much longer than the original text (rare cases when the API returns a lot of garbage text)
   let numOfAttempts = 0;
+
+  const isTranslationTooLong = (text: string) =>
+    text.length > block.text.length * 2.2 && text.length > 50;
+
+  const translationContainsJibberish = (text: string) =>
+    text.includes("🤍") || text.includes("♦");
+
+  const isTranslationSuspicious = (text: string) =>
+    isTranslationTooLong(text) || translationContainsJibberish(text);
+
   while (
-    translatedText.length > block.text.length * 1.6 &&
-    translatedText.length > 20 &&
-    numOfAttempts < 5
+    isTranslationSuspicious(translatedText) &&
+    numOfAttempts < NUM_OF_TRANSLATION_ATTEMPTS
   ) {
     numOfAttempts++;
 
-    logger.warn(
-      `💬 Translated text is too long (${translatedText.length} vs ${block.text.length}), trying again (${numOfAttempts})`
-    );
+    const warningMessage = isTranslationTooLong(translatedText)
+      ? `Translated text is too long compared to the original (${translatedText.length} vs ${block.text.length})`
+      : `Translated text contains gibberish symbols`;
+
+    logger.warn(`🔥 ${warningMessage}, trying again (${numOfAttempts})`);
+
+    console.log("Incorrect translation:\n" + translatedText);
 
     const secondAttemptResponse = await queue.add(() =>
       fetchAPIResponse(prompt, {
@@ -102,13 +120,31 @@ export const translateBlockContent = async (
     [translatedText, usage] = secondAttemptResponse;
   }
 
+  const translationIsStillSuspicious =
+    numOfAttempts >= NUM_OF_TRANSLATION_ATTEMPTS &&
+    isTranslationSuspicious(translatedText);
+  // Last resolve - remove special characters from the translation:
+  if (translationIsStillSuspicious) {
+    if (translationContainsJibberish(translatedText)) {
+      translatedText = translatedText.replace("🤍", "").replace("♦", "").trim();
+      logger.warn(`🔥 Removed special characters from text: ${translatedText}`);
+      translatedText = "🔶 Check this one: " + translatedText;
+    }
+
+    if (isTranslationTooLong(translatedText)) {
+      translatedText = "🔎 Check this one: " + translatedText;
+    }
+  }
+
   const translatedBlock: TranslationBlock = { ...block, text: translatedText };
 
   newMessages[newMessages.length - 1].tokens = usage.prompt_tokens;
+  newMessages[newMessages.length - 1].attachToPrompt =
+    !translationIsStillSuspicious; // Do not attach to next prompts the user message that was not translated correctly
   newMessages.push({
     role: APIRole.Assistant,
     content: translatedText,
-    attachToPrompt: true,
+    attachToPrompt: !translationIsStillSuspicious, // Do not attach to next prompts incorrect translations
     relevantBlockId: block.blockId,
     tokens: usage.completion_tokens,
   });

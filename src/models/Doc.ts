@@ -123,7 +123,6 @@ schema.pre("save", async function (next) {
   // In rare cases it will be the same as another slug, and the db will respond in error
   const randomString = makeid(6);
   this.slug = generatedSlug + "-" + randomString;
-  console.log(this, generatedSlug);
 
   return next();
 });
