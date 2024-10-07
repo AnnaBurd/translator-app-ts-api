@@ -8,7 +8,7 @@ For instance, the bi-lingual international company the application was initially
 
 To address this issue, we have developed an AI-powered application designed specifically for enhancing the accuracy of translations by utilizing private databases with pre-existing samples from various fields and industries. By doing so, we can significantly improve efficiency while also reducing costs associated with manual corrections - ultimately providing better quality service overall!
 
-[**View Live** _(\* might requre a few minutes to warm up server)_](https://translatorai.tech/ "Translator App")
+[**View Live** _(\* might requre a few minutes to warm up server)_](https://geotranslate.app/ "Translator App")
 
 ## Key Features
 
